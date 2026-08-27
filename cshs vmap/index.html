@@ -1797,6 +1797,8 @@ var spidey = {
   bubble: null,
   text: null,
   speaking: false,
+  voicesReady: false,
+  voices: [],
   descriptions: {
     "loc-gate": "Welcome to Cabiao Senior High School! I'm Spiderman, your virtual tour guide. This is the Main Gate — the primary entrance where every great adventure begins. Step inside and let's explore the campus together!",
     "loc-principal": "This is the Principal's Office, the heart of school administration. Important decisions and policies are made right here. The principal and staff work hard to keep everything running smoothly for all students.",
@@ -1809,6 +1811,15 @@ var spidey = {
   },
   init: function(){
     var self = this;
+    // Load voices
+    if('speechSynthesis' in window){
+      self.voices = speechSynthesis.getVoices();
+      speechSynthesis.onvoiceschanged = function(){
+        self.voices = speechSynthesis.getVoices();
+        self.voicesReady = self.voices.length > 0;
+      };
+      if(self.voices.length > 0) self.voicesReady = true;
+    }
     // Create Spiderman container
     var container = document.createElement('div');
     container.id = 'spidey-narrator';
@@ -1817,35 +1828,22 @@ var spidey = {
     self.el = container;
     self.bubble = document.getElementById('spideyBubble');
     self.text = document.getElementById('spideyText');
-    // Close button
     document.getElementById('spideyClose').onclick = function(){ self.hide(); };
-    // Avatar click to restore
     document.getElementById('spideyAvatar').onclick = function(){ self.show(); self.speak("Hey! I'm still here! Click on a location to hear about it!"); };
-    // Add click handlers to location cards
     self.bindLocationClicks();
   },
   bindLocationClicks: function(){
     var self = this;
-    // Bind to location detail buttons
     document.addEventListener('click', function(e){
-      var card = e.target.closest('[data-loc]');
+      // Match location cards (data-open-loc), map pins (data-loc-id), search results (data-loc), scene strip (data-loc-id)
+      var card = e.target.closest('[data-open-loc], [data-loc], [data-loc-id]');
       if(card){
-        var locId = card.getAttribute('data-loc');
-        var desc = self.descriptions[locId];
-        if(desc){
-          self.show();
-          self.speak(desc);
-        }
-      }
-      // Also bind to tour scene strip items
-      var sceneBtn = e.target.closest('.scene-strip-item');
-      if(sceneBtn){
-        var sceneLocId = sceneBtn.getAttribute('data-loc-id');
-        if(sceneLocId){
-          var desc2 = self.descriptions[sceneLocId];
-          if(desc2){
+        var locId = card.getAttribute('data-open-loc') || card.getAttribute('data-loc') || card.getAttribute('data-loc-id');
+        if(locId){
+          var desc = self.descriptions[locId];
+          if(desc){
             self.show();
-            self.speak(desc2);
+            self.speak(desc);
           }
         }
       }
@@ -1870,16 +1868,25 @@ var spidey = {
     utter.rate = 0.95;
     utter.pitch = 1.1;
     utter.volume = 1;
-    // Try to find a male voice
-    var voices = speechSynthesis.getVoices();
-    var male = voices.find(function(v){ return v.name.toLowerCase().indexOf('male') > -1 || v.name.indexOf('Daniel') > -1 || v.name.indexOf('Google UK English Male') > -1; });
-    if(male) utter.voice = male;
+    // Find a voice
+    var voices = self.voices.length > 0 ? self.voices : speechSynthesis.getVoices();
+    var preferred = ['Google US English','Google UK English Male','Microsoft David','Microsoft Mark','Daniel','Alex','Samantha','Karen'];
+    var voice = null;
+    for(var i = 0; i < preferred.length; i++){
+      voice = voices.find(function(v){ return v.name === preferred[i]; });
+      if(voice) break;
+    }
+    if(!voice && voices.length > 0) voice = voices[0];
+    if(voice) utter.voice = voice;
     utter.onstart = function(){ self.el.classList.add('speaking'); };
     utter.onend = function(){ self.el.classList.remove('speaking'); };
+    utter.onerror = function(){ self.el.classList.remove('speaking'); };
     speechSynthesis.speak(utter);
   },
   stop: function(){
-    if('speechSynthesis' in window) speechSynthesis.cancel();
+    if('speechSynthesis' in window){
+      speechSynthesis.cancel();
+    }
     if(this.el) this.el.classList.remove('speaking');
   },
   setText: function(text){
