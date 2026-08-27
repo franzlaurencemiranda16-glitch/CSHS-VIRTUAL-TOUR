@@ -1915,27 +1915,14 @@ init();
 /* Spiderman Narrator */
 #spidey-narrator{
   position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:flex-end;gap:12px;
-  opacity:0;transform:translateY(20px) scale(.9);transition:all .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
 }
-#spidey-narrator.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
-#spidey-narrator.speaking .spidey-avatar{animation:spidey-bounce .5s ease infinite;}
-@keyframes spidey-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.spidey-avatar{
-  width:70px;height:70px;border-radius:50%;background:#e62117;border:3px solid #fff;
-  box-shadow:0 4px 20px rgba(230,33,23,.5);cursor:pointer;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;transition:transform .2s;position:relative;
-}
-.spidey-avatar:hover{transform:scale(1.12);}
-.spidey-pulse{
-  position:absolute;inset:-6px;border-radius:50%;border:2px solid #e62117;
-  animation:spidey-pulse 2s ease-out infinite;pointer-events:none;
-}
-@keyframes spidey-pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
 .spidey-bubble{
   background:#fff;border-radius:18px;border-bottom-right-radius:4px;padding:14px 44px 14px 16px;
   max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.2);position:relative;
-  border:2px solid #e62117;
+  border:2px solid #e62117;display:none;
 }
+#spidey-narrator.visible .spidey-bubble{display:block;animation:spidey-pop .3s ease;}
+@keyframes spidey-pop{0%{opacity:0;transform:translateY(10px) scale(.9)}100%{opacity:1;transform:translateY(0) scale(1)}}
 .spidey-bubble::after{
   content:'';position:absolute;bottom:8px;right:-10px;width:0;height:0;
   border-left:10px solid #e62117;border-top:10px solid transparent;border-bottom:0;
@@ -1951,6 +1938,21 @@ init();
   cursor:pointer;padding:4px 8px;border-radius:50%;transition:.15s;
 }
 .spidey-speak-btn:hover{background:#f0f0f0;transform:scale(1.15);}
+.spidey-avatar{
+  width:70px;height:70px;border-radius:50%;background:#e62117;border:3px solid #fff;
+  box-shadow:0 4px 20px rgba(230,33,23,.5);cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:transform .2s;position:relative;
+  animation:spidey-float 3s ease-in-out infinite;
+}
+@keyframes spidey-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.spidey-avatar:hover{transform:scale(1.12);}
+#spidey-narrator.speaking .spidey-avatar{animation:spidey-bounce .5s ease infinite;}
+@keyframes spidey-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.spidey-pulse{
+  position:absolute;inset:-6px;border-radius:50%;border:2px solid #e62117;
+  animation:spidey-pulse 2s ease-out infinite;pointer-events:none;
+}
+@keyframes spidey-pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
 </style>
 
 </body>
