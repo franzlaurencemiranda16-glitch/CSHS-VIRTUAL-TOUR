@@ -1122,6 +1122,7 @@ $("#locSearchInput").addEventListener("input", renderLocationsPage);
    ============================================================ */
 function openDetail(locId){
   var loc = locById(locId); if(!loc) return;
+  if(typeof window.onLocOpen === 'function') window.onLocOpen(locId);
   var c = catById(loc.categoryId);
   $("#detailModal").innerHTML =
     '<div class="modal-hero" style="'+coverStyle(loc)+'">'+
@@ -1408,6 +1409,7 @@ function renderTourPage(){
   renderSceneStrip();
 }
 function loadScene(locId){
+  if(typeof window.onLocOpen === 'function') window.onLocOpen(locId);
   if(!viewerInstance){ STATE.currentSceneLocId = locId; renderTourPage(); return; }
   if(!locById(locId) || !locById(locId).panorama) return;
   viewerInstance.loadScene(locId);
@@ -1834,20 +1836,10 @@ var spidey = {
   },
   bindLocationClicks: function(){
     var self = this;
-    document.addEventListener('click', function(e){
-      // Match location cards (data-open-loc), map pins (data-loc-id), search results (data-loc), scene strip (data-loc-id)
-      var card = e.target.closest('[data-open-loc], [data-loc], [data-loc-id]');
-      if(card){
-        var locId = card.getAttribute('data-open-loc') || card.getAttribute('data-loc') || card.getAttribute('data-loc-id');
-        if(locId){
-          var desc = self.descriptions[locId];
-          if(desc){
-            self.show();
-            self.speak(desc);
-          }
-        }
-      }
-    });
+    window.onLocOpen = function(locId){
+      var desc = self.descriptions[locId];
+      if(desc){ self.show(); self.speak(desc); }
+    };
   },
   show: function(){
     if(this.el) this.el.classList.add('visible');
