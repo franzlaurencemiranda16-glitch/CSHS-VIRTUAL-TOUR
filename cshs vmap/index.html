@@ -390,6 +390,10 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           Start Virtual Tour
         </button>
+        <a href="https://travvir.com/place/m3EXyM" target="_blank" rel="noopener" class="btn btn-outline-light" style="text-decoration:none;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          View 360° on Travvir
+        </a>
         <button class="btn btn-outline-light" data-nav="map">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13M15 7v13"/></svg>
           View Campus Map
@@ -511,6 +515,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <h3 id="tourSceneTitle">—</h3>
         </div>
         <div class="tour-top-btns">
+          <a href="https://travvir.com/place/m3EXyM" target="_blank" rel="noopener" class="icon-btn" title="Open 360° on Travvir" aria-label="Open 360° on Travvir" style="text-decoration:none;color:#fff;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>
           <button class="icon-btn" id="tourMapBtn" title="Back to campus map" aria-label="Back to campus map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13M15 7v13"/></svg></button>
           <button class="icon-btn" id="tourFullscreenBtn" title="Fullscreen" aria-label="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg></button>
         </div>
@@ -1132,6 +1137,7 @@ function openDetail(locId){
       '</div>'+
       '<div class="modal-actions">'+
         (loc.panorama?'<button class="btn btn-green btn-sm" id="detailTourBtn">▶ View 360° tour</button>':'')+
+        '<a href="https://travvir.com/place/m3EXyM" target="_blank" rel="noopener" class="btn btn-green btn-sm" style="text-decoration:none;">🌐 Travvir 360°</a>'+
         '<button class="btn btn-ghost btn-sm" id="detailMapBtn">📍 View on map</button>'+
         '<button class="btn btn-ghost btn-sm" id="detailBackBtn">← Back to locations</button>'+
       '</div>'+
@@ -1247,6 +1253,7 @@ function showPopup(loc, anchorPin){
       '<p>'+esc(loc.short)+'</p>'+
       '<div class="popup-actions">'+
         (loc.panorama?'<button class="btn btn-green btn-sm" id="popTourBtn">360° tour</button>':'')+
+        '<a href="https://travvir.com/place/m3EXyM" target="_blank" rel="noopener" class="btn btn-green btn-sm" style="text-decoration:none;">🌐 Travvir</a>'+
         '<button class="btn btn-ghost btn-sm" id="popMoreBtn">More info</button>'+
       '</div>'+
     '</div>';
@@ -1781,6 +1788,144 @@ async function init(){
 init();
 
 })();
+
+/* ============================================================
+   SPIDERMAN NARRATOR
+   ============================================================ */
+var spidey = {
+  el: null,
+  bubble: null,
+  text: null,
+  speaking: false,
+  descriptions: {
+    "loc-gate": "Welcome to Cabiao Senior High School! I'm Spiderman, your virtual tour guide. This is the Main Gate — the primary entrance where every great adventure begins. Step inside and let's explore the campus together!",
+    "loc-principal": "This is the Principal's Office, the heart of school administration. Important decisions and policies are made right here. The principal and staff work hard to keep everything running smoothly for all students.",
+    "loc-ict": "Welcome to the ICT Laboratory! This is where students learn computer skills, programming, and technology. From coding to digital projects, this lab is equipped with everything needed for modern learning.",
+    "loc-library": "Shhh! This is the Library — a quiet sanctuary for reading, research, and study. With books, references, and computers, it's the perfect place to expand your knowledge and discover new worlds.",
+    "loc-canteen": "Hungry? This is the Campus Canteen! Students and staff grab meals and snacks here throughout the day. The best spot to refuel and recharge between classes.",
+    "loc-court": "This is the Covered Court — the energetic heart of campus life! Sports events, assemblies, intramurals, and school-wide celebrations all happen right here.",
+    "loc-clinic": "The School Clinic is always ready to help! From first aid to health monitoring, the clinic staff take care of students and keep everyone safe and healthy.",
+    "loc-guidance": "The Guidance Office supports students with counseling, academic advice, and personal concerns. A safe space where every student can find help and guidance."
+  },
+  init: function(){
+    var self = this;
+    // Create Spiderman container
+    var container = document.createElement('div');
+    container.id = 'spidey-narrator';
+    container.innerHTML = '<div class="spidey-bubble" id="spideyBubble"><div class="spidey-bubble-text" id="spideyText">Hi! I\'m Spiderman! Click on any location to hear me describe it! 🕷️</div><button class="spidey-bubble-close" id="spideyClose" aria-label="Close">&times;</button></div><div class="spidey-avatar" id="spideyAvatar"><svg viewBox="0 0 100 100" width="60" height="60"><circle cx="50" cy="50" r="48" fill="#e62117"/><ellipse cx="50" cy="48" rx="30" ry="28" fill="#fff"/><ellipse cx="38" cy="42" rx="10" ry="12" fill="#000"/><ellipse cx="62" cy="42" rx="10" ry="12" fill="#000"/><ellipse cx="38" cy="42" rx="5" ry="6" fill="#fff"/><ellipse cx="62" cy="42" rx="5" ry="6" fill="#fff"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="2" fill="none"/><line x1="50" y1="50" x2="30" y2="65" stroke="#000" stroke-width="1.5"/><line x1="50" y1="50" x2="70" y2="65" stroke="#000" stroke-width="1.5"/><line x1="50" y1="50" x2="50" y2="75" stroke="#000" stroke-width="1.5"/><path d="M20 20 L50 50 L80 20" stroke="#000" stroke-width="1.5" fill="none"/><path d="M20 80 L50 50 L80 80" stroke="#000" stroke-width="1.5" fill="none"/></svg></div>';
+    document.body.appendChild(container);
+    self.el = container;
+    self.bubble = document.getElementById('spideyBubble');
+    self.text = document.getElementById('spideyText');
+    // Close button
+    document.getElementById('spideyClose').onclick = function(){ self.hide(); };
+    // Avatar click to restore
+    document.getElementById('spideyAvatar').onclick = function(){ self.show(); self.speak("Hey! I'm still here! Click on a location to hear about it!"); };
+    // Add click handlers to location cards
+    self.bindLocationClicks();
+  },
+  bindLocationClicks: function(){
+    var self = this;
+    // Bind to location detail buttons
+    document.addEventListener('click', function(e){
+      var card = e.target.closest('[data-loc]');
+      if(card){
+        var locId = card.getAttribute('data-loc');
+        var desc = self.descriptions[locId];
+        if(desc){
+          self.show();
+          self.speak(desc);
+        }
+      }
+      // Also bind to tour scene strip items
+      var sceneBtn = e.target.closest('.scene-strip-item');
+      if(sceneBtn){
+        var sceneLocId = sceneBtn.getAttribute('data-loc-id');
+        if(sceneLocId){
+          var desc2 = self.descriptions[sceneLocId];
+          if(desc2){
+            self.show();
+            self.speak(desc2);
+          }
+        }
+      }
+    });
+  },
+  show: function(){
+    if(this.el) this.el.classList.add('visible');
+  },
+  hide: function(){
+    if(this.el) this.el.classList.remove('visible');
+    this.stop();
+  },
+  speak: function(text){
+    var self = this;
+    if(!('speechSynthesis' in window)) {
+      self.setText(text);
+      return;
+    }
+    self.stop();
+    self.setText(text);
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.95;
+    utter.pitch = 1.1;
+    utter.volume = 1;
+    // Try to find a male voice
+    var voices = speechSynthesis.getVoices();
+    var male = voices.find(function(v){ return v.name.toLowerCase().indexOf('male') > -1 || v.name.indexOf('Daniel') > -1 || v.name.indexOf('Google UK English Male') > -1; });
+    if(male) utter.voice = male;
+    utter.onstart = function(){ self.el.classList.add('speaking'); };
+    utter.onend = function(){ self.el.classList.remove('speaking'); };
+    speechSynthesis.speak(utter);
+  },
+  stop: function(){
+    if('speechSynthesis' in window) speechSynthesis.cancel();
+    if(this.el) this.el.classList.remove('speaking');
+  },
+  setText: function(text){
+    if(this.text) this.text.textContent = text;
+  }
+};
+
+// Init spidey after DOM load
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', function(){ spidey.init(); });
+} else {
+  spidey.init();
+}
 </script>
+
+<style>
+/* Spiderman Narrator */
+#spidey-narrator{
+  position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:flex-end;gap:12px;
+  opacity:0;transform:translateY(20px);transition:all .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+}
+#spidey-narrator.visible{opacity:1;transform:translateY(0);pointer-events:auto;}
+#spidey-narrator.speaking .spidey-avatar{animation:spidey-bounce .6s ease infinite;}
+@keyframes spidey-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.spidey-avatar{
+  width:70px;height:70px;border-radius:50%;background:#e62117;border:3px solid #fff;
+  box-shadow:0 4px 20px rgba(230,33,23,.4);cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:transform .2s;
+}
+.spidey-avatar:hover{transform:scale(1.1);}
+.spidey-bubble{
+  background:#fff;border-radius:18px;border-bottom-right-radius:4px;padding:16px 20px;
+  max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.18);position:relative;
+  border:2px solid #e62117;
+}
+.spidey-bubble::after{
+  content:'';position:absolute;bottom:0;right:-10px;width:0;height:0;
+  border-left:10px solid #e62117;border-top:10px solid transparent;border-bottom:0;
+}
+.spidey-bubble-text{font-size:14px;line-height:1.5;color:#1a1a1a;font-family:'Inter',sans-serif;}
+.spidey-bubble-close{
+  position:absolute;top:6px;right:10px;background:none;border:none;font-size:18px;
+  color:#999;cursor:pointer;padding:4px 8px;border-radius:50%;
+}
+.spidey-bubble-close:hover{background:#f0f0f0;color:#333;}
+</style>
+
 </body>
 </html>
