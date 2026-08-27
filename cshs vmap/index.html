@@ -582,6 +582,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
       <button data-admin="tour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="4"/></svg> Virtual tour</button>
       <button data-admin="categories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.82z"/></svg> Categories</button>
       <button data-admin="content"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Site content</button>
+      <button data-admin="images"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Images</button>
     </nav>
     <button class="logout-btn" id="adminLogoutBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Log out</button>
   </aside>
@@ -705,6 +706,48 @@ table.admintable tr:hover td{background:var(--paper-dim);}
         </div>
         <button type="submit" class="btn btn-green">Save changes</button>
       </form>
+    </div>
+
+    <!-- Images management -->
+    <div class="admin-page" id="admin-images">
+      <div class="admin-topline"><div><h2>Images</h2><p>Upload and change the school logo, Spider-Man avatar, and C-EXPERTO logo.</p></div></div>
+      <div class="panel">
+        <div class="panel-head"><h3>School Logo (CSHS Seal)</h3></div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <img id="imgPreviewLogo" src="" alt="Logo" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--green-200);display:none;">
+          <div class="upload-box" id="imgLogoBox" style="flex:1;min-width:200px;">
+            <span>Click to upload school logo</span>
+            <input type="file" id="imgLogoInput" accept="image/*">
+          </div>
+        </div>
+        <p class="field-hint" style="margin-top:8px;">Recommended: square image, 200x200px or larger.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Spider-Man Avatar</h3></div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <img id="imgPreviewAvatar" src="" alt="Avatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--green-200);display:none;">
+          <div class="upload-box" id="imgAvatarBox" style="flex:1;min-width:200px;">
+            <span>Click to upload Spider-Man avatar</span>
+            <input type="file" id="imgAvatarInput" accept="image/*">
+          </div>
+        </div>
+        <p class="field-hint" style="margin-top:8px;">The avatar shown on the narrator bubble.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>C-EXPERTO Logo</h3></div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <img id="imgPreviewExperto" src="" alt="C-EXPERTO" style="height:50px;border-radius:4px;object-fit:contain;border:2px solid var(--green-200);display:none;">
+          <div class="upload-box" id="imgExpertoBox" style="flex:1;min-width:200px;">
+            <span>Click to upload C-EXPERTO logo</span>
+            <input type="file" id="imgExpertoInput" accept="image/*">
+          </div>
+        </div>
+        <p class="field-hint" style="margin-top:8px;">Displayed in the footer credits.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <button type="button" class="btn btn-green" id="imgSaveBtn">Save all images</button>
+        <span id="imgSaveMsg" style="margin-left:12px;font-size:13px;color:var(--green-700);"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -1718,6 +1761,70 @@ $("#contentForm").addEventListener("submit", function(e){
   toast("Site content saved");
 });
 
+/* ---- Images admin ---- */
+var IMAGE_KEYS = { logo: null, avatar: null, experto: null };
+
+function initImageUpload(inputId, previewId, key) {
+  var input = document.getElementById(inputId);
+  var preview = document.getElementById(previewId);
+  input.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      IMAGE_KEYS[key] = ev.target.result;
+      preview.src = ev.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadImages() {
+  try {
+    var res = await fetch('/api/images');
+    var data = await res.json();
+    if (data.logo) {
+      IMAGE_KEYS.logo = data.logo;
+      var p = document.getElementById('imgPreviewLogo');
+      p.src = data.logo; p.style.display = 'block';
+      document.querySelector('#imgLogoBox span').textContent = 'Click to change logo';
+    }
+    if (data.avatar) {
+      IMAGE_KEYS.avatar = data.avatar;
+      var p = document.getElementById('imgPreviewAvatar');
+      p.src = data.avatar; p.style.display = 'block';
+      document.querySelector('#imgAvatarBox span').textContent = 'Click to change avatar';
+    }
+    if (data.experto) {
+      IMAGE_KEYS.experto = data.experto;
+      var p = document.getElementById('imgPreviewExperto');
+      p.src = data.experto; p.style.display = 'block';
+      document.querySelector('#imgExpertoBox span').textContent = 'Click to change C-EXPERTO logo';
+    }
+  } catch(e) {}
+}
+
+async function saveImages() {
+  try {
+    await fetch('/api/images', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(IMAGE_KEYS)
+    });
+    document.getElementById('imgSaveMsg').textContent = 'Images saved! Refresh the page to see changes.';
+    setTimeout(function(){ document.getElementById('imgSaveMsg').textContent = ''; }, 4000);
+  } catch(e) {
+    document.getElementById('imgSaveMsg').textContent = 'Error saving images.';
+  }
+}
+
+initImageUpload('imgLogoInput', 'imgPreviewLogo', 'logo');
+initImageUpload('imgAvatarInput', 'imgPreviewAvatar', 'avatar');
+initImageUpload('imgExpertoInput', 'imgPreviewExperto', 'experto');
+document.getElementById('imgSaveBtn').addEventListener('click', saveImages);
+loadImages();
+
 /* ============================================================
    CONFIRM DIALOG HELPER
    ============================================================ */
@@ -1861,6 +1968,27 @@ init();
   // Init
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', createUI);
   else createUI();
+})();
+
+/* ---- Dynamic image loading ---- */
+(function(){
+  async function loadSiteImages(){
+    try {
+      var res = await fetch('/api/images');
+      var data = await res.json();
+      if(data.logo){
+        document.querySelectorAll('img[alt="CSHS logo"]').forEach(function(img){ img.src = data.logo; });
+      }
+      if(data.avatar){
+        document.querySelectorAll('.spidey-img').forEach(function(img){ img.src = data.avatar; });
+      }
+      if(data.experto){
+        document.querySelectorAll('img[alt="C-EXPERTO"]').forEach(function(img){ img.src = data.experto; });
+      }
+    } catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', loadSiteImages);
+  else loadSiteImages();
 })();
 </script>
 
