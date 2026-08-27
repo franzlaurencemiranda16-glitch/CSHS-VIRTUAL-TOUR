@@ -1122,7 +1122,7 @@ $("#locSearchInput").addEventListener("input", renderLocationsPage);
    ============================================================ */
 function openDetail(locId){
   var loc = locById(locId); if(!loc) return;
-  if(typeof window.onLocOpen === 'function') window.onLocOpen(locId);
+  if(typeof window._spideyOnLoc === 'function') window._spideyOnLoc(locId);
   var c = catById(loc.categoryId);
   $("#detailModal").innerHTML =
     '<div class="modal-hero" style="'+coverStyle(loc)+'">'+
@@ -1409,7 +1409,7 @@ function renderTourPage(){
   renderSceneStrip();
 }
 function loadScene(locId){
-  if(typeof window.onLocOpen === 'function') window.onLocOpen(locId);
+  if(typeof window._spideyOnLoc === 'function') window._spideyOnLoc(locId);
   if(!viewerInstance){ STATE.currentSceneLocId = locId; renderTourPage(); return; }
   if(!locById(locId) || !locById(locId).panorama) return;
   viewerInstance.loadScene(locId);
@@ -1792,138 +1792,165 @@ init();
 })();
 
 /* ============================================================
-   SPIDERMAN NARRATOR
+   SPIDERMAN NARRATOR — voice guide for the campus
    ============================================================ */
-var spidey = {
-  el: null,
-  bubble: null,
-  text: null,
-  speaking: false,
-  voicesReady: false,
-  voices: [],
-  descriptions: {
-    "loc-gate": "Welcome to Cabiao Senior High School! I'm Spiderman, your virtual tour guide. This is the Main Gate — the primary entrance where every great adventure begins. Step inside and let's explore the campus together!",
+(function(){
+  var DESCS = {
+    "loc-gate": "Welcome to Cabiao Senior High School! I'm Spiderman, your virtual tour guide. This is the Main Gate, the primary entrance where every great adventure begins. Step inside and let's explore the campus together!",
     "loc-principal": "This is the Principal's Office, the heart of school administration. Important decisions and policies are made right here. The principal and staff work hard to keep everything running smoothly for all students.",
     "loc-ict": "Welcome to the ICT Laboratory! This is where students learn computer skills, programming, and technology. From coding to digital projects, this lab is equipped with everything needed for modern learning.",
-    "loc-library": "Shhh! This is the Library — a quiet sanctuary for reading, research, and study. With books, references, and computers, it's the perfect place to expand your knowledge and discover new worlds.",
+    "loc-library": "This is the Library, a quiet sanctuary for reading, research, and study. With books, references, and computers, it is the perfect place to expand your knowledge and discover new worlds.",
     "loc-canteen": "Hungry? This is the Campus Canteen! Students and staff grab meals and snacks here throughout the day. The best spot to refuel and recharge between classes.",
-    "loc-court": "This is the Covered Court — the energetic heart of campus life! Sports events, assemblies, intramurals, and school-wide celebrations all happen right here.",
+    "loc-court": "This is the Covered Court, the energetic heart of campus life! Sports events, assemblies, intramurals, and school-wide celebrations all happen right here.",
     "loc-clinic": "The School Clinic is always ready to help! From first aid to health monitoring, the clinic staff take care of students and keep everyone safe and healthy.",
     "loc-guidance": "The Guidance Office supports students with counseling, academic advice, and personal concerns. A safe space where every student can find help and guidance."
-  },
-  init: function(){
-    var self = this;
-    // Load voices
-    if('speechSynthesis' in window){
-      self.voices = speechSynthesis.getVoices();
-      speechSynthesis.onvoiceschanged = function(){
-        self.voices = speechSynthesis.getVoices();
-        self.voicesReady = self.voices.length > 0;
-      };
-      if(self.voices.length > 0) self.voicesReady = true;
-    }
-    // Create Spiderman container
-    var container = document.createElement('div');
-    container.id = 'spidey-narrator';
-    container.innerHTML = '<div class="spidey-bubble" id="spideyBubble"><div class="spidey-bubble-text" id="spideyText">Hi! I\'m Spiderman! Click on any location to hear me describe it! 🕷️</div><button class="spidey-bubble-close" id="spideyClose" aria-label="Close">&times;</button></div><div class="spidey-avatar" id="spideyAvatar"><svg viewBox="0 0 100 100" width="60" height="60"><circle cx="50" cy="50" r="48" fill="#e62117"/><ellipse cx="50" cy="48" rx="30" ry="28" fill="#fff"/><ellipse cx="38" cy="42" rx="10" ry="12" fill="#000"/><ellipse cx="62" cy="42" rx="10" ry="12" fill="#000"/><ellipse cx="38" cy="42" rx="5" ry="6" fill="#fff"/><ellipse cx="62" cy="42" rx="5" ry="6" fill="#fff"/><path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="2" fill="none"/><line x1="50" y1="50" x2="30" y2="65" stroke="#000" stroke-width="1.5"/><line x1="50" y1="50" x2="70" y2="65" stroke="#000" stroke-width="1.5"/><line x1="50" y1="50" x2="50" y2="75" stroke="#000" stroke-width="1.5"/><path d="M20 20 L50 50 L80 20" stroke="#000" stroke-width="1.5" fill="none"/><path d="M20 80 L50 50 L80 80" stroke="#000" stroke-width="1.5" fill="none"/></svg></div>';
-    document.body.appendChild(container);
-    self.el = container;
-    self.bubble = document.getElementById('spideyBubble');
-    self.text = document.getElementById('spideyText');
-    document.getElementById('spideyClose').onclick = function(){ self.hide(); };
-    document.getElementById('spideyAvatar').onclick = function(){ self.show(); self.speak("Hey! I'm still here! Click on a location to hear about it!"); };
-    self.bindLocationClicks();
-  },
-  bindLocationClicks: function(){
-    var self = this;
-    window.onLocOpen = function(locId){
-      var desc = self.descriptions[locId];
-      if(desc){ self.show(); self.speak(desc); }
-    };
-  },
-  show: function(){
-    if(this.el) this.el.classList.add('visible');
-  },
-  hide: function(){
-    if(this.el) this.el.classList.remove('visible');
-    this.stop();
-  },
-  speak: function(text){
-    var self = this;
-    if(!('speechSynthesis' in window)) {
-      self.setText(text);
-      return;
-    }
-    self.stop();
-    self.setText(text);
-    var utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 0.95;
-    utter.pitch = 1.1;
-    utter.volume = 1;
-    // Find a voice
-    var voices = self.voices.length > 0 ? self.voices : speechSynthesis.getVoices();
-    var preferred = ['Google US English','Google UK English Male','Microsoft David','Microsoft Mark','Daniel','Alex','Samantha','Karen'];
-    var voice = null;
-    for(var i = 0; i < preferred.length; i++){
-      voice = voices.find(function(v){ return v.name === preferred[i]; });
-      if(voice) break;
-    }
-    if(!voice && voices.length > 0) voice = voices[0];
-    if(voice) utter.voice = voice;
-    utter.onstart = function(){ self.el.classList.add('speaking'); };
-    utter.onend = function(){ self.el.classList.remove('speaking'); };
-    utter.onerror = function(){ self.el.classList.remove('speaking'); };
-    speechSynthesis.speak(utter);
-  },
-  stop: function(){
-    if('speechSynthesis' in window){
-      speechSynthesis.cancel();
-    }
-    if(this.el) this.el.classList.remove('speaking');
-  },
-  setText: function(text){
-    if(this.text) this.text.textContent = text;
-  }
-};
+  };
+  var DEFAULT_DESC = "Welcome to Cabiao Senior High School! I am Spiderman, your virtual tour guide. Tap any location on the map or click a card to hear me describe it. Let us explore the campus together!";
+  var spideyEl = null, bubbleEl = null, textEl = null, avatarEl = null;
+  var spokenOnce = false;
 
-// Init spidey after DOM load
-if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', function(){ spidey.init(); });
-} else {
-  spidey.init();
-}
+  function createUI(){
+    var d = document.createElement('div');
+    d.id = 'spidey-narrator';
+    d.innerHTML =
+      '<div class="spidey-bubble" id="spideyBubble">'+
+        '<div class="spidey-bubble-text" id="spideyText">Hi! I am Spiderman! Tap me or click any location to hear about it!</div>'+
+        '<button class="spidey-speak-btn" id="spideySpeakBtn" title="Hear it aloud">&#128266;</button>'+
+        '<button class="spidey-bubble-close" id="spideyClose" aria-label="Close">&times;</button>'+
+      '</div>'+
+      '<div class="spidey-avatar" id="spideyAvatar" title="Click me to hear about the campus!">'+
+        '<svg viewBox="0 0 100 100" width="60" height="60">'+
+          '<circle cx="50" cy="50" r="48" fill="#e62117"/>'+
+          '<ellipse cx="50" cy="48" rx="30" ry="28" fill="#fff"/>'+
+          '<ellipse cx="38" cy="42" rx="10" ry="12" fill="#000"/>'+
+          '<ellipse cx="62" cy="42" rx="10" ry="12" fill="#000"/>'+
+          '<ellipse cx="38" cy="42" rx="5" ry="6" fill="#fff"/>'+
+          '<ellipse cx="62" cy="42" rx="5" ry="6" fill="#fff"/>'+
+          '<path d="M30 65 Q50 80 70 65" stroke="#000" stroke-width="2" fill="none"/>'+
+          '<line x1="50" y1="50" x2="30" y2="65" stroke="#000" stroke-width="1.5"/>'+
+          '<line x1="50" y1="50" x2="70" y2="65" stroke="#000" stroke-width="1.5"/>'+
+          '<line x1="50" y1="50" x2="50" y2="75" stroke="#000" stroke-width="1.5"/>'+
+          '<path d="M20 20 L50 50 L80 20" stroke="#000" stroke-width="1.5" fill="none"/>'+
+          '<path d="M20 80 L50 50 L80 80" stroke="#000" stroke-width="1.5" fill="none"/>'+
+        '</svg>'+
+        '<div class="spidey-pulse"></div>'+
+      '</div>'+
+    '</div>';
+    document.body.appendChild(d);
+    spideyEl = d;
+    bubbleEl = document.getElementById('spideyBubble');
+    textEl = document.getElementById('spideyText');
+    avatarEl = document.getElementById('spideyAvatar');
+
+    document.getElementById('spideyClose').onclick = function(){ hide(); };
+    document.getElementById('spideySpeakBtn').onclick = function(){ speak(textEl.textContent); };
+    avatarEl.onclick = function(){
+      show();
+      if(!spokenOnce){
+        spokenOnce = true;
+        speak(DEFAULT_DESC);
+      } else {
+        speak("Hey! I am still here! Click on any location to hear about it!");
+      }
+    };
+  }
+
+  function show(){ if(spideyEl) spideyEl.classList.add('visible'); }
+  function hide(){ if(spideyEl) spideyEl.classList.remove('visible'); stop(); }
+
+  function speak(text){
+    if(!text) return;
+    stop();
+    setText(text);
+    show();
+    if(!('speechSynthesis' in window)) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9;
+    u.pitch = 1.0;
+    u.volume = 1;
+    var voices = speechSynthesis.getVoices();
+    if(voices.length){
+      var pick = null;
+      var names = ['Google US English','Google UK English Male','Microsoft David','Microsoft Mark','Daniel','Alex','Samantha','Karen','Microsoft Zira','Microsoft Heera'];
+      for(var i=0;i<names.length;i++){ pick = voices.find(function(v){return v.name===names[i];}); if(pick) break; }
+      if(!pick) pick = voices[0];
+      if(pick) u.voice = pick;
+    }
+    u.onstart = function(){ if(spideyEl) spideyEl.classList.add('speaking'); };
+    u.onend = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
+    u.onerror = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
+    speechSynthesis.speak(u);
+  }
+
+  function stop(){
+    if('speechSynthesis' in window) speechSynthesis.cancel();
+    if(spideyEl) spideyEl.classList.remove('speaking');
+  }
+
+  function setText(t){ if(textEl) textEl.textContent = t; }
+
+  // Hook into the IIFE's openDetail and loadScene via global callbacks
+  window._spideyOnLoc = function(locId){
+    var d = DESCS[locId] || ("You are looking at a campus location. Explore more to learn about Cabiao Senior High School!");
+    show();
+    speak(d);
+  };
+
+  // Also catch clicks via event delegation as fallback
+  document.addEventListener('click', function(e){
+    var card = e.target.closest('[data-open-loc], [data-loc-id]');
+    if(card){
+      var locId = card.getAttribute('data-open-loc') || card.getAttribute('data-loc-id');
+      if(locId && DESCS[locId]){ show(); speak(DESCS[locId]); }
+    }
+  });
+
+  // Init
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', createUI);
+  else createUI();
+})();
 </script>
 
 <style>
 /* Spiderman Narrator */
 #spidey-narrator{
   position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:flex-end;gap:12px;
-  opacity:0;transform:translateY(20px);transition:all .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+  opacity:0;transform:translateY(20px) scale(.9);transition:all .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
 }
-#spidey-narrator.visible{opacity:1;transform:translateY(0);pointer-events:auto;}
-#spidey-narrator.speaking .spidey-avatar{animation:spidey-bounce .6s ease infinite;}
-@keyframes spidey-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#spidey-narrator.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+#spidey-narrator.speaking .spidey-avatar{animation:spidey-bounce .5s ease infinite;}
+@keyframes spidey-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .spidey-avatar{
   width:70px;height:70px;border-radius:50%;background:#e62117;border:3px solid #fff;
-  box-shadow:0 4px 20px rgba(230,33,23,.4);cursor:pointer;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;transition:transform .2s;
+  box-shadow:0 4px 20px rgba(230,33,23,.5);cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:transform .2s;position:relative;
 }
-.spidey-avatar:hover{transform:scale(1.1);}
+.spidey-avatar:hover{transform:scale(1.12);}
+.spidey-pulse{
+  position:absolute;inset:-6px;border-radius:50%;border:2px solid #e62117;
+  animation:spidey-pulse 2s ease-out infinite;pointer-events:none;
+}
+@keyframes spidey-pulse{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
 .spidey-bubble{
-  background:#fff;border-radius:18px;border-bottom-right-radius:4px;padding:16px 20px;
-  max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.18);position:relative;
+  background:#fff;border-radius:18px;border-bottom-right-radius:4px;padding:14px 44px 14px 16px;
+  max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.2);position:relative;
   border:2px solid #e62117;
 }
 .spidey-bubble::after{
-  content:'';position:absolute;bottom:0;right:-10px;width:0;height:0;
+  content:'';position:absolute;bottom:8px;right:-10px;width:0;height:0;
   border-left:10px solid #e62117;border-top:10px solid transparent;border-bottom:0;
 }
-.spidey-bubble-text{font-size:14px;line-height:1.5;color:#1a1a1a;font-family:'Inter',sans-serif;}
+.spidey-bubble-text{font-size:13.5px;line-height:1.5;color:#1a1a1a;font-family:'Inter',sans-serif;}
 .spidey-bubble-close{
-  position:absolute;top:6px;right:10px;background:none;border:none;font-size:18px;
+  position:absolute;top:6px;right:8px;background:none;border:none;font-size:18px;
   color:#999;cursor:pointer;padding:4px 8px;border-radius:50%;
 }
 .spidey-bubble-close:hover{background:#f0f0f0;color:#333;}
+.spidey-speak-btn{
+  position:absolute;bottom:6px;right:30px;background:none;border:none;font-size:16px;
+  cursor:pointer;padding:4px 8px;border-radius:50%;transition:.15s;
+}
+.spidey-speak-btn:hover{background:#f0f0f0;transform:scale(1.15);}
 </style>
 
 </body>
