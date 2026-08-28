@@ -9,12 +9,20 @@
     "render-postbuild": "mkdir -p public data"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "sharp": "^0.35.4"
   },
   "engines": {
     "node": ">=14.0.0"
   },
-  "keywords": ["virtual-tour", "CSHS", "cabiao", "senior-high", "360", "voice-narration"],
+  "keywords": [
+    "virtual-tour",
+    "CSHS",
+    "cabiao",
+    "senior-high",
+    "360",
+    "voice-narration"
+  ],
   "license": "MIT"
 }
