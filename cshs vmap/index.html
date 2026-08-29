@@ -354,10 +354,11 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 .page{display:none;}
 .page.active{display:block;}
 
-/* Logo styling - show natural colors */
-.footer-brand img, .admin-login-card img {
-  mix-blend-mode: normal;
+/* Logo styling - school seal JPEG needs multiply to make white bg transparent on dark header/footer */
+.brand img, .footer-brand img, .admin-login-card img {
+  mix-blend-mode: multiply;
 }
+/* C-EXPERTO logo - show natural colors */
 .footer-credits img {
   mix-blend-mode: normal !important;
 }
