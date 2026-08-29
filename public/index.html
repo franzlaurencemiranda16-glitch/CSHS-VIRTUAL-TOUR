@@ -2102,15 +2102,19 @@ init();
     setText(text);
     show();
     if(!('speechSynthesis' in window)) return;
-    var u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.0;
-    u.pitch = 1.0;
-    u.volume = 1;
     speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95;
+    u.pitch = 1.15;
+    u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
-      var best = ['Microsoft David Desktop','Microsoft David','Google US English','Google UK English Male','Daniel','James','Alex','Guy','Microsoft Mark'];
+      var best = [
+        'Microsoft Zira Desktop','Microsoft Zira','Google US English',
+        'Google UK English Female','Samantha','Victoria','Karen','Daniel',
+        'Microsoft David Desktop','Microsoft David','Alex','Guy','Microsoft Mark'
+      ];
       for(var i=0;i<best.length;i++){
         var match = voices.find(function(v){ return v.name === best[i]; });
         if(match) return match;
@@ -2127,8 +2131,7 @@ init();
     u.onstart = function(){ if(spideyEl) spideyEl.classList.add('speaking'); };
     u.onend = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
     u.onerror = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    setTimeout(function(){ speechSynthesis.speak(u); }, 150);
   }
 
   function stop(){
