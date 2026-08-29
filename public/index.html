@@ -223,7 +223,7 @@ a{color:inherit;}
 .tour-loc-title .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-300);font-weight:700;}
 .tour-loc-title h3{font-family:var(--font-display);font-size:19px;margin:2px 0 0;}
 .tour-top-btns{display:flex;gap:8px;position:relative;z-index:110;}
-.icon-btn{width:38px;height:38px;border-radius:10px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;position:relative;z-index:110;cursor:pointer;}
+.icon-btn{width:38px;height:38px;border-radius:10px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;position:relative;z-index:110;cursor:pointer;pointer-events:auto;}
 .icon-btn:hover{background:rgba(0,0,0,.65);}
 .icon-btn svg{width:18px;height:18px;pointer-events:none;}
 .scene-strip{display:flex;gap:10px;overflow-x:auto;padding:16px 2px 4px;margin-top:16px;}
@@ -356,10 +356,10 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 
 /* Logo styling - show natural colors */
 .footer-brand img, .admin-login-card img {
-  mix-blend-mode: multiply;
+  mix-blend-mode: normal;
 }
 .footer-credits img {
-  mix-blend-mode: normal;
+  mix-blend-mode: normal !important;
 }
 </style>
 </head>
@@ -424,7 +424,6 @@ table.admintable tr:hover td{background:var(--paper-dim);}
         </button>
       </div>
     </div>
-    <div class="gear-divider on-dark" style="position:relative;z-index:2;"></div>
     <div class="stats-strip">
       <div class="stats-grid">
         <div class="stat"><b id="statLocations">12</b><span>Campus Locations</span></div>
@@ -1499,22 +1498,23 @@ function renderSceneStrip(){
   }).join("");
   $all("[data-scene]", $("#sceneStrip")).forEach(function(b){ b.onclick=function(){ var sid=this.getAttribute("data-scene"); loadScene(sid); if(typeof window._spideyOnLoc==="function") window._spideyOnLoc(sid); }; });
 }
-$("#tourMapBtn").addEventListener("click", function(){ goto("map"); });
+$("#tourMapBtn").addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); goto("map"); });
 $("#tourPrevBtn").addEventListener("click", function(e){
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   var scenes = scenesFromLocations();
   var idx = scenes.findIndex(function(s){ return s.id === STATE.currentSceneLocId; });
   if(idx > 0) loadScene(scenes[idx-1].id);
   else if(scenes.length) loadScene(scenes[scenes.length-1].id);
 });
 $("#tourNextBtn").addEventListener("click", function(e){
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   var scenes = scenesFromLocations();
   var idx = scenes.findIndex(function(s){ return s.id === STATE.currentSceneLocId; });
   if(idx < scenes.length-1) loadScene(scenes[idx+1].id);
   else if(scenes.length) loadScene(scenes[0].id);
 });
-$("#tourFullscreenBtn").addEventListener("click", function(){
+$("#tourFullscreenBtn").addEventListener("click", function(e){
+  e.preventDefault(); e.stopPropagation();
   var stage = $("#tourStage");
   if(!document.fullscreenElement){ stage.requestFullscreen && stage.requestFullscreen(); stage.classList.add("fullscreen-active"); }
   else { document.exitFullscreen && document.exitFullscreen(); stage.classList.remove("fullscreen-active"); }
