@@ -2041,14 +2041,20 @@ init();
   var DEFAULT_GREETING = "Thwip! What's up, friendly neighborhood student! I'm Spiderman, your virtual tour guide here at Cabiao Senior High School! Tap any location on the map or click a card and I'll tell you all about it. Let's swing through this campus together!";
   var DESCS = {};
   function loadDescs(){
-    var sp = (STATE && STATE.content && STATE.content.spidey) || {};
+    var sp = (typeof STATE !== 'undefined' && STATE && STATE.content && STATE.content.spidey) || {};
     DESCS = {};
     for(var k in DEFAULT_DESCS){
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
     }
   }
   loadDescs();
-  window._updateSpideyDescs = function(){ loadDescs(); };
+  window._updateSpideyDescs = function(){
+    var sp = (typeof STATE !== 'undefined' && STATE && STATE.content && STATE.content.spidey) || {};
+    for(var k in DEFAULT_DESCS){
+      DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
+    }
+    DEFAULT_DESC = DESCS["default"] || DEFAULT_GREETING;
+  };
   var DEFAULT_DESC = DESCS["default"] || DEFAULT_GREETING;
   var spideyEl = null, bubbleEl = null, textEl = null, avatarEl = null;
   var spokenOnce = false;
