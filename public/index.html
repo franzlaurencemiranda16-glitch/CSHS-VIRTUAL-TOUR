@@ -2109,15 +2109,19 @@ init();
     show();
     if(!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9;
+    u.pitch = 1.0;
+    u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
       var best = [
-        'Microsoft Zira Desktop','Microsoft Zira',
-        'Google US English','Google UK English Female',
-        'Samantha','Victoria','Karen','Moira','Tessa',
         'Microsoft David Desktop','Microsoft David',
-        'Daniel','Alex','Guy','Microsoft Mark'
+        'Google US English','Google UK English Male',
+        'Daniel','James','Alex','Guy','Microsoft Mark',
+        'Microsoft Zira Desktop','Microsoft Zira',
+        'Samantha','Victoria','Karen'
       ];
       for(var i=0;i<best.length;i++){
         var match = voices.find(function(v){ return v.name === best[i]; });
@@ -2131,11 +2135,7 @@ init();
       return (eng.length ? eng[0] : null) || voices[0];
     }
     var pick = pickVoice();
-    var u = new SpeechSynthesisUtterance(text);
     if(pick) u.voice = pick;
-    u.rate = 0.9;
-    u.pitch = 1.1;
-    u.volume = 1;
     u.onstart = function(){ if(spideyEl) spideyEl.classList.add('speaking'); };
     u.onend = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
     u.onerror = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
