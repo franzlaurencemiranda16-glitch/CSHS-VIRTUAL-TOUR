@@ -1020,19 +1020,45 @@ async function loadAll(){
     if(!cat) await saveCategories();
     if(!con) await saveContent();
   }catch(e){
-    console.warn("Storage unavailable, using in-memory defaults.", e);
-    STATE.locations = DEFAULT_LOCATIONS.slice();
-    STATE.categories = DEFAULT_CATEGORIES.slice();
-    STATE.content = Object.assign({}, DEFAULT_CONTENT);
+    console.warn("Storage unavailable, trying server API.", e);
+    try{
+      var res = await fetch('/api/locations');
+      var data = await res.json();
+      if(data && data.length) STATE.locations = data;
+      else { STATE.locations = DEFAULT_LOCATIONS.slice(); await saveLocations(); }
+    }catch(e2){ STATE.locations = DEFAULT_LOCATIONS.slice(); }
+    try{
+      var res = await fetch('/api/categories');
+      var data = await res.json();
+      if(data && data.length) STATE.categories = data;
+      else { STATE.categories = DEFAULT_CATEGORIES.slice(); await saveCategories(); }
+    }catch(e2){ STATE.categories = DEFAULT_CATEGORIES.slice(); }
+    try{
+      var res = await fetch('/api/content');
+      var data = await res.json();
+      if(data && Object.keys(data).length) STATE.content = data;
+      else { STATE.content = Object.assign({}, DEFAULT_CONTENT); await saveContent(); }
+    }catch(e2){ STATE.content = Object.assign({}, DEFAULT_CONTENT); }
   }
 }
 async function safeGet(key){
   try{ return await window.storage.get(key, true); }catch(e){ return null; }
 }
-async function saveLocations(){ try{ await window.storage.set(STORAGE_KEYS.locations, JSON.stringify(STATE.locations), true); }catch(e){} }
-async function saveCategories(){ try{ await window.storage.set(STORAGE_KEYS.categories, JSON.stringify(STATE.categories), true); }catch(e){} }
-async function saveContent(){ try{ await window.storage.set(STORAGE_KEYS.content, JSON.stringify(STATE.content), true); }catch(e){} }
-async function saveMapImage(){ try{ await window.storage.set(STORAGE_KEYS.mapimg, STATE.mapImage || "", true); }catch(e){} }
+async function saveLocations(){
+  try{ await window.storage.set(STORAGE_KEYS.locations, JSON.stringify(STATE.locations), true); }catch(e){}
+  try{ await fetch('/api/locations',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE.locations)}); }catch(e){}
+}
+async function saveCategories(){
+  try{ await window.storage.set(STORAGE_KEYS.categories, JSON.stringify(STATE.categories), true); }catch(e){}
+  try{ await fetch('/api/categories',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE.categories)}); }catch(e){}
+}
+async function saveContent(){
+  try{ await window.storage.set(STORAGE_KEYS.content, JSON.stringify(STATE.content), true); }catch(e){}
+  try{ await fetch('/api/content',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE.content)}); }catch(e){}
+}
+async function saveMapImage(){
+  try{ await window.storage.set(STORAGE_KEYS.mapimg, STATE.mapImage || "", true); }catch(e){}
+}
 
 /* ============================================================
    UTILITIES
