@@ -80,6 +80,20 @@ a{color:inherit;}
 .nav-desktop button:hover{background:rgba(255,255,255,.1);color:#fff;}
 .nav-desktop button.active{background:var(--gold-500);color:var(--green-950);font-weight:600;}
 .nav-admin-btn{background:transparent !important;border:1px solid rgba(255,255,255,.35) !important;color:#fff !important;}
+.header-search{position:relative;margin-left:8px;}
+.header-search-btn{background:none;border:none;color:rgba(255,255,255,.82);padding:8px;border-radius:50%;cursor:pointer;transition:.15s;}
+.header-search-btn:hover{background:rgba(255,255,255,.1);color:#fff;}
+.header-search-btn svg{width:18px;height:18px;}
+.header-search-box{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:8px;display:none;z-index:100;}
+.header-search-box.open{display:block;}
+.header-search-box input{width:100%;padding:12px 14px 12px 40px;border-radius:999px;border:1.5px solid var(--line);background:#f8faf8;font-size:14px;outline:none;box-sizing:border-box;}
+.header-search-box input:focus{border-color:var(--green-600);}
+.header-search-box .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--ink-500);pointer-events:none;}
+.header-search-results{max-height:300px;overflow-y:auto;margin-top:4px;}
+.header-search-results a{display:block;padding:10px 14px;border-radius:8px;text-decoration:none;color:var(--ink-800);font-size:14px;transition:.1s;}
+.header-search-results a:hover{background:var(--green-50);color:var(--green-800);}
+.header-search-results a .sr-cat{font-size:11px;color:var(--ink-400);display:block;margin-top:2px;}
+.header-search-results .no-results{padding:14px;color:var(--ink-400);font-size:13px;text-align:center;}
 .hamburger{display:none;background:none;border:none;color:#fff;padding:8px;}
 .hamburger svg{width:26px;height:26px;}
 .mobile-nav{display:none;position:fixed;inset:0;z-index:70;background:var(--green-950);flex-direction:column;padding:20px;}
@@ -380,6 +394,16 @@ table.admintable tr:hover td{background:var(--paper-dim);}
       <button data-nav="about">About</button>
       <button data-nav="admin" class="nav-admin-btn">Admin</button>
     </nav>
+    <div class="header-search" id="headerSearch">
+      <button class="header-search-btn" id="headerSearchBtn" aria-label="Search facilities">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div class="header-search-box" id="headerSearchBox">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="headerSearchInput" placeholder="Search facilities, rooms..." autocomplete="off" aria-label="Search facilities">
+        <div class="header-search-results" id="headerSearchResults"></div>
+      </div>
+    </div>
     <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
@@ -1119,6 +1143,69 @@ document.addEventListener("click", function(e){
 function closeMobileNav(){ $("#mobileNav").classList.remove("open"); $("#hamburgerBtn").setAttribute("aria-expanded","false"); }
 $("#hamburgerBtn").addEventListener("click", function(){ $("#mobileNav").classList.add("open"); this.setAttribute("aria-expanded","true"); });
 $("#mobileCloseBtn").addEventListener("click", closeMobileNav);
+
+/* ============================================================
+   HEADER GLOBAL SEARCH
+   ============================================================ */
+(function(){
+  var btn = $("#headerSearchBtn");
+  var box = $("#headerSearchBox");
+  var input = $("#headerSearchInput");
+  var results = $("#headerSearchResults");
+  var debounce = null;
+
+  btn.addEventListener("click", function(e){
+    e.stopPropagation();
+    box.classList.toggle("open");
+    if(box.classList.contains("open")) input.focus();
+  });
+
+  document.addEventListener("click", function(e){
+    if(!box.contains(e.target) && e.target !== btn) box.classList.remove("open");
+  });
+
+  input.addEventListener("input", function(){
+    clearTimeout(debounce);
+    debounce = setTimeout(function(){ doGlobalSearch(input.value.trim()); }, 180);
+  });
+
+  function doGlobalSearch(q){
+    if(!q){ results.innerHTML = ""; return; }
+    var lower = q.toLowerCase();
+    var all = [];
+    (STATE.locations || []).forEach(function(loc){
+      all.push({name:loc.name || loc.title || "", desc:loc.description || "", cat:loc.category || "Campus", id:loc.id || loc.slug || ""});
+    });
+    var cats = {};
+    (STATE.categories || []).forEach(function(c){ cats[c.id] = c.name; });
+    var found = all.filter(function(item){
+      return (item.name && item.name.toLowerCase().indexOf(lower) !== -1) ||
+             (item.desc && item.desc.toLowerCase().indexOf(lower) !== -1) ||
+             (item.cat && item.cat.toLowerCase().indexOf(lower) !== -1);
+    });
+    if(!found.length){
+      results.innerHTML = '<div class="no-results">No results found</div>';
+      return;
+    }
+    var html = "";
+    found.forEach(function(item){
+      var catLabel = cats[item.cat] || item.cat || "Campus";
+      html += '<a href="#" data-nav="tour" data-loc="' + item.id + '">' + item.name + '<span class="sr-cat">' + catLabel + '</span></a>';
+    });
+    results.innerHTML = html;
+    results.querySelectorAll("a").forEach(function(a){
+      a.addEventListener("click", function(e){
+        e.preventDefault();
+        box.classList.remove("open");
+        input.value = "";
+        results.innerHTML = "";
+        var locId = this.getAttribute("data-loc");
+        if(locId) navigateTo("tour", locId);
+        else navigateTo("tour");
+      });
+    });
+  }
+})();
 
 /* ============================================================
    HERO CANVAS — subtle animated campus atmosphere (leaves/particles)
