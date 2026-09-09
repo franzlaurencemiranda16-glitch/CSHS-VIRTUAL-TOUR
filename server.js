@@ -103,6 +103,11 @@ app.post("/api/auth", (req, res) => {
   }
 });
 
+// ========== BIRTHDAY PAGE ==========
+app.get("/birthday", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "birthday.html"));
+});
+
 // SPA fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
