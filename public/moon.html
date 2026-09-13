@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+
+    body{
+      background:#070d1a;
+      color:#d0daf0;
+      font-family:'Inter',sans-serif;
+      min-height:100vh;
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* Sky gradient */
+    .sky{
+      position:fixed;
+      inset:0;
+      background:linear-gradient(180deg, #070d1a 0%, #0c1a33 40%, #112244 70%, #1a3355 100%);
+    }
+
+    /* Stars */
+    .star{
+      position:fixed;
+      background:#fff;
+      border-radius:50%;
+      animation:twinkle ease-in-out infinite alternate;
+      pointer-events:none;
+    }
+
+    @keyframes twinkle{
+      0%{opacity:0.2;transform:scale(0.8)}
+      100%{opacity:1;transform:scale(1.2)}
+    }
+
+    /* Shooting star */
+    .shooting-star{
+      position:fixed;
+      width:3px;
+      height:3px;
+      background:#fff;
+      border-radius:50%;
+      box-shadow:0 0 6px 2px rgba(147,197,253,0.6);
+      animation:shoot 1s linear forwards;
+      pointer-events:none;
+    }
+
+    .shooting-star::after{
+      content:'';
+      position:absolute;
+      top:0;right:0;
+      width:60px;
+      height:1px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+      transform-origin:right center;
+      transform:rotate(0deg);
+    }
+
+    @keyframes shoot{
+      0%{opacity:1;transform:translate(0,0)}
+      100%{opacity:0;transform:translate(-300px,200px)}
+    }
+
+    /* Moon */
+    .moon{
+      position:fixed;
+      top:8%;
+      right:12%;
+      width:100px;
+      height:100px;
+      border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, #f0f4ff, #c8d8f0, #9ab0d4);
+      box-shadow:0 0 40px rgba(200,216,240,0.4), 0 0 80px rgba(154,176,212,0.2), 0 0 120px rgba(154,176,212,0.1);
+    }
+
+    .moon::before{
+      content:'';
+      position:absolute;
+      top:15px;left:20px;
+      width:25px;height:25px;
+      border-radius:50%;
+      background:rgba(154,176,212,0.15);
+    }
+
+    .moon::after{
+      content:'';
+      position:absolute;
+      bottom:20px;right:18px;
+      width:15px;height:15px;
+      border-radius:50%;
+      background:rgba(154,176,212,0.12);
+    }
+
+    /* Moon glow ring */
+    .moon-glow{
+      position:fixed;
+      top:8%;
+      right:12%;
+      width:100px;
+      height:100px;
+      border-radius:50%;
+      box-shadow:0 0 60px 20px rgba(147,197,253,0.08), 0 0 120px 40px rgba(147,197,253,0.04);
+      pointer-events:none;
+    }
+
+    /* Content layout */
+    .layout{
+      position:relative;
+      z-index:10;
+      display:flex;
+      min-height:100vh;
+      align-items:center;
+      padding:40px;
+      gap:40px;
+    }
+
+    /* Moon side */
+    .moon-side{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .moon-msg{
+      text-align:center;
+      max-width:320px;
+    }
+
+    .moon-msg h1{
+      font-family:'Cormorant Garamond',serif;
+      font-size:3rem;
+      font-weight:600;
+      color:#e8f0ff;
+      line-height:1;
+      margin-bottom:8px;
+      text-shadow:0 0 40px rgba(147,197,253,0.3);
+    }
+
+    .moon-msg h1 span{
+      display:block;
+      font-size:0.5em;
+      color:#7aabe8;
+      letter-spacing:6px;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+
+    .moon-msg .sub{
+      font-size:13px;
+      color:#5a7aa0;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      margin-top:16px;
+    }
+
+    .moon-msg .click-hint{
+      font-size:11px;
+      color:#3a5575;
+      margin-top:30px;
+      letter-spacing:1px;
+    }
+
+    /* Letter side */
+    .letter-side{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .letter-card{
+      background:linear-gradient(145deg, rgba(15,25,50,0.9), rgba(10,18,35,0.95));
+      border:1px solid rgba(96,165,250,0.1);
+      border-radius:16px;
+      padding:36px 32px;
+      max-width:420px;
+      width:100%;
+      backdrop-filter:blur(20px);
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .letter-to{
+      font-family:'Cormorant Garamond',serif;
+      font-size:13px;
+      letter-spacing:4px;
+      text-transform:uppercase;
+      color:#60a5fa;
+      margin-bottom:20px;
+      font-weight:600;
+    }
+
+    .letter-body{
+      font-size:14px;
+      line-height:2;
+      color:#8fa8c8;
+    }
+
+    .letter-body p{
+      margin-bottom:12px;
+    }
+
+    .letter-body .em{
+      color:#93c5fd;
+      font-weight:500;
+    }
+
+    .letter-sign{
+      margin-top:20px;
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic;
+      font-size:17px;
+      color:#60a5fa;
+      text-align:right;
+    }
+
+    .line{
+      width:30px;
+      height:1px;
+      background:#3b82f6;
+      margin:16px 0;
+    }
+
+    /* Floating particles */
+    .particle{
+      position:fixed;
+      pointer-events:none;
+      border-radius:50%;
+      z-index:5;
+    }
+
+    @keyframes floatUp{
+      0%{opacity:0;transform:translateY(0)}
+      20%{opacity:0.6}
+      80%{opacity:0.3}
+      100%{opacity:0;transform:translateY(-60vh)}
+    }
+
+    /* Mobile */
+    @media(max-width:768px){
+      .layout{
+        flex-direction:column;
+        padding:24px 20px;
+        overflow-y:auto;
+      }
+      body{overflow-y:auto}
+      .moon-side{min-height:35vh}
+      .moon{width:60px;height:60px;top:5%;right:5%}
+      .moon-glow{width:60px;height:60px;top:5%;right:5%}
+      .moon-msg h1{font-size:2rem}
+      .letter-card{padding:28px 24px}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sky"></div>
+  <div class="moon-glow"></div>
+  <div class="moon" id="moon"></div>
+
+  <div class="layout">
+
+    <!-- Moon Side -->
+    <div class="moon-side">
+      <div class="moon-msg">
+        <h1>
+          <span>Happy</span>
+          Birthday
+        </h1>
+        <p class="sub">Wish upon a star tonight</p>
+        <p class="click-hint">Tap the moon or stars</p>
+      </div>
+    </div>
+
+    <!-- Letter Side -->
+    <div class="letter-side">
+      <div class="letter-card">
+        <p class="letter-to">For you, under the same sky</p>
+        <div class="letter-body">
+          <p>Happy birthday. Even though we've gone our separate ways, I still find myself thinking about you on days like this.</p>
+          <p>I owe you an apology. I wasn't the person you needed me to be. I said things I shouldn't have, and I did things that hurt you. <span class="em">That was never your fault — that was mine.</span></p>
+          <div class="line"></div>
+          <p>You gave me chances I didn't deserve, and I wasted them. I'm sorry for the sleepless nights I caused you, for the tears, for the doubt I put in your heart.</p>
+          <p>I hope wherever life has taken you, it's filled with <span class="em">peace and the love you deserve</span>. You always deserved better, and I hope you found it.</p>
+        </div>
+        <div class="letter-sign">Thinking of you always</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Create stars
+    for(let i = 0; i < 150; i++){
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = Math.random()*100 + 'vw';
+      s.style.top = Math.random()*100 + 'vh';
+      const size = Math.random()*2.5 + 0.5;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.animationDuration = (1 + Math.random()*3) + 's';
+      s.style.animationDelay = Math.random()*3 + 's';
+      document.body.appendChild(s);
+    }
+
+    // Random shooting stars
+    function shootingStar(){
+      const s = document.createElement('div');
+      s.className = 'shooting-star';
+      s.style.top = Math.random()*40 + 'vh';
+      s.style.left = (50 + Math.random()*50) + 'vw';
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 1200);
+    }
+
+    setInterval(shootingStar, 4000 + Math.random()*6000);
+    setTimeout(shootingStar, 1500);
+
+    // Floating particles
+    function spawnParticle(){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 2 + Math.random()*3;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.background = ['#3b82f6','#60a5fa','#93c5fd','#bfdbfe'][Math.floor(Math.random()*4)];
+      p.style.left = Math.random()*100 + 'vw';
+      p.style.bottom = '-10px';
+      p.style.animation = 'floatUp ' + (6 + Math.random()*6) + 's linear forwards';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 14000);
+    }
+
+    setInterval(spawnParticle, 800);
+
+    // Click moon → burst stars
+    document.getElementById('moon').addEventListener('click', () => {
+      for(let i = 0; i < 20; i++){
+        setTimeout(() => spawnParticle(), i * 50);
+      }
+    });
+
+    // Click any star → burst
+    document.addEventListener('click', (e) => {
+      if(e.target.classList.contains('star')){
+        for(let i = 0; i < 8; i++){
+          setTimeout(() => spawnParticle(), i * 40);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+
+    body{
+      background:#0a1628;
+      color:#e0e8f0;
+      font-family:'Inter',sans-serif;
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    .layout{
+      display:flex;
+      min-height:100vh;
+    }
+
+    /* ---- Tree Side ---- */
+    .tree-side{
+      flex:1;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      position:relative;
+      padding:40px 20px 0;
+      overflow:hidden;
+    }
+
+    .tree-side::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:radial-gradient(ellipse at 50% 80%, rgba(59,130,246,0.08) 0%, transparent 70%);
+      pointer-events:none;
+    }
+
+    .tree-container{
+      position:relative;
+      width:300px;
+      height:70vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    /* Trunk */
+    .trunk{
+      width:20px;
+      height:120px;
+      background:linear-gradient(180deg, #3d2b1f 0%, #5c3d2e 100%);
+      border-radius:4px;
+      position:relative;
+      z-index:2;
+    }
+
+    /* Canopy */
+    .canopy{
+      position:relative;
+      width:260px;
+      height:280px;
+      margin-bottom:-20px;
+      z-index:1;
+    }
+
+    .canopy-layer{
+      position:absolute;
+      border-radius:50%;
+    }
+
+    .canopy-layer:nth-child(1){
+      width:180px;height:180px;
+      background:radial-gradient(circle at 40% 40%, #4a8fd4, #2563a0);
+      left:50%;top:0;transform:translateX(-50%);
+      box-shadow:0 0 60px rgba(59,130,246,0.3);
+    }
+
+    .canopy-layer:nth-child(2){
+      width:150px;height:150px;
+      background:radial-gradient(circle at 40% 40%, #60a5fa, #3b82f6);
+      left:20px;top:40px;
+      box-shadow:0 0 40px rgba(96,165,250,0.2);
+    }
+
+    .canopy-layer:nth-child(3){
+      width:150px;height:150px;
+      background:radial-gradient(circle at 40% 40%, #60a5fa, #3b82f6);
+      right:20px;top:40px;
+      box-shadow:0 0 40px rgba(96,165,250,0.2);
+    }
+
+    .canopy-layer:nth-child(4){
+      width:120px;height:120px;
+      background:radial-gradient(circle at 40% 40%, #93c5fd, #60a5fa);
+      left:50%;top:80px;transform:translateX(-50%);
+      box-shadow:0 0 50px rgba(147,197,253,0.2);
+    }
+
+    /* Hearts on tree */
+    .heart{
+      position:absolute;
+      z-index:3;
+      font-size:18px;
+      cursor:pointer;
+      transition:transform 0.3s, filter 0.3s;
+      filter:drop-shadow(0 0 6px rgba(255,255,255,0.3));
+      animation:heartFloat 3s ease-in-out infinite;
+    }
+
+    .heart:hover{
+      transform:scale(1.4);
+      filter:drop-shadow(0 0 12px rgba(147,197,253,0.8));
+    }
+
+    @keyframes heartFloat{
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-4px)}
+    }
+
+    /* Falling hearts */
+    .falling-heart{
+      position:fixed;
+      pointer-events:none;
+      z-index:50;
+      animation:fallDown linear forwards;
+    }
+
+    @keyframes fallDown{
+      0%{opacity:1;transform:translateY(0) rotate(0deg)}
+      100%{opacity:0;transform:translateY(100vh) rotate(360deg)}
+    }
+
+    /* Ground */
+    .ground{
+      width:300px;
+      height:30px;
+      background:linear-gradient(180deg, #1a3a5c, #0f2340);
+      border-radius:50%;
+      position:relative;
+      z-index:2;
+    }
+
+    /* ---- Letter Side ---- */
+    .letter-side{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:40px;
+      position:relative;
+    }
+
+    .letter-card{
+      background:linear-gradient(145deg, #111d32, #0d1a2d);
+      border:1px solid rgba(96,165,250,0.15);
+      border-radius:16px;
+      padding:40px 36px;
+      max-width:440px;
+      width:100%;
+      position:relative;
+      box-shadow:0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .letter-card::before{
+      content:'';
+      position:absolute;
+      inset:-1px;
+      border-radius:16px;
+      background:linear-gradient(145deg, rgba(96,165,250,0.2), transparent, rgba(147,197,253,0.1));
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .letter-icon{
+      font-size:28px;
+      margin-bottom:16px;
+      display:block;
+    }
+
+    .letter-to{
+      font-size:12px;
+      letter-spacing:3px;
+      text-transform:uppercase;
+      color:#60a5fa;
+      margin-bottom:20px;
+      font-weight:600;
+    }
+
+    .letter-body{
+      font-size:14.5px;
+      line-height:2;
+      color:#b0c4de;
+    }
+
+    .letter-body p{
+      margin-bottom:14px;
+    }
+
+    .letter-body .highlight{
+      color:#93c5fd;
+      font-weight:600;
+    }
+
+    .letter-sign{
+      margin-top:24px;
+      font-family:'Playfair Display',serif;
+      font-style:italic;
+      font-size:16px;
+      color:#60a5fa;
+      text-align:right;
+    }
+
+    .letter-divider{
+      width:40px;
+      height:2px;
+      background:linear-gradient(90deg, transparent, #3b82f6, transparent);
+      margin:20px 0;
+    }
+
+    /* Mobile */
+    @media(max-width:768px){
+      .layout{
+        flex-direction:column;
+      }
+      .tree-side{
+        min-height:50vh;
+        padding-top:60px;
+      }
+      .letter-side{
+        padding:20px;
+      }
+      .letter-card{
+        padding:28px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- Tree Side -->
+    <div class="tree-side">
+      <div class="tree-container">
+        <div class="canopy" id="canopy">
+          <div class="canopy-layer"></div>
+          <div class="canopy-layer"></div>
+          <div class="canopy-layer"></div>
+          <div class="canopy-layer"></div>
+        </div>
+        <div class="trunk"></div>
+        <div class="ground"></div>
+      </div>
+    </div>
+
+    <!-- Letter Side -->
+    <div class="letter-side">
+      <div class="letter-card">
+        <span class="letter-icon">💙</span>
+        <p class="letter-to">To you, on your day</p>
+        <div class="letter-body">
+          <p>Happy birthday. I know we're not in each other's lives the way we used to be, and I respect that. But today, I still want you to know that I'm thinking of you.</p>
+
+          <p>I'm sorry for the pain I caused you. I was young, I was careless, and I didn't realize how much my actions affected you. <span class="highlight">You didn't deserve any of it.</span></p>
+
+          <p>You were one of the most genuine people I've ever known, and I regret not treating you the way you deserved. I hope life has been good to you since then.</p>
+
+          <div class="letter-divider"></div>
+
+          <p>I don't expect a reply. I just needed you to hear this — <span class="highlight">thank you for the good memories</span>, and I'm truly sorry for the bad ones.</p>
+
+          <p>Be well. Always.</p>
+        </div>
+        <div class="letter-sign">With sincerity</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Place hearts on the canopy
+    const canopy = document.getElementById('canopy');
+    const hearts = ['💙','🩵','💙','🩵','💙','🤍','💙','🩵','💙','🩵','💙','🤍','💙','🩵','💙'];
+    const positions = [
+      {left:'45%',top:'5%'},
+      {left:'25%',top:'15%'},
+      {left:'65%',top:'12%'},
+      {left:'15%',top:'30%'},
+      {left:'75%',top:'28%'},
+      {left:'35%',top:'25%'},
+      {left:'55%',top:'20%'},
+      {left:'42%',top:'38%'},
+      {left:'20%',top:'45%'},
+      {left:'68%',top:'42%'},
+      {left:'50%',top:'50%'},
+      {left:'30%',top:'55%'},
+      {left:'60%',top:'48%'},
+      {left:'45%',top:'60%'},
+      {left:'55%',top:'65%'},
+    ];
+
+    positions.forEach((pos, i) => {
+      const h = document.createElement('span');
+      h.className = 'heart';
+      h.textContent = hearts[i % hearts.length];
+      h.style.left = pos.left;
+      h.style.top = pos.top;
+      h.style.animationDelay = (i * 0.3) + 's';
+      h.style.fontSize = (14 + Math.random() * 10) + 'px';
+      h.addEventListener('click', () => spawnFallingHearts(pos.left));
+      canopy.appendChild(h);
+    });
+
+    // Click tree to drop hearts
+    canopy.addEventListener('click', () => {
+      spawnFallingHearts('40%');
+      spawnFallingHearts('60%');
+    });
+
+    function spawnFallingHearts(startLeft){
+      const colors = ['#3b82f6','#60a5fa','#93c5fd','#ffffff','#bfdbfe'];
+      for(let i = 0; i < 8; i++){
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'falling-heart';
+          el.textContent = ['💙','🩵','🤍','💙','🩵'][Math.floor(Math.random()*5)];
+          el.style.left = (parseFloat(startLeft) + (Math.random()-0.5)*20) + '%';
+          el.style.top = '-20px';
+          el.style.fontSize = (14 + Math.random()*10) + 'px';
+          el.style.animationDuration = (2 + Math.random()*2) + 's';
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 5000);
+        }, i * 80);
+      }
+    }
+
+    // Auto hearts on load
+    setTimeout(() => {
+      spawnFallingHearts('30%');
+      spawnFallingHearts('50%');
+      spawnFallingHearts('70%');
+    }, 500);
+  </script>
+</body>
+</html>
