@@ -1372,12 +1372,7 @@ function renderPins(canvasEl, opts){
         e.stopPropagation();
         if(opts.editing){ openLocForm(loc.id); }
         else {
-          if(loc.panorama){
-            goto("tour");
-            setTimeout(function(){ loadScene(loc.id); }, 100);
-          } else {
-            openDetail(loc.id);
-          }
+          showPopup(loc, pin);
         }
       });
     }
@@ -1489,7 +1484,60 @@ function setupPanZoom(viewportId, canvasId, controls){
   return {apply:apply, t:t};
 }
 
-function renderMapPins(){ renderPins($("#mapCanvas"), {editing:false}); }
+function renderMapPins(){ renderPins($("#mapCanvas"), {editing:false}); renderMapConnections(); renderMapLegend(); }
+function renderMapConnections(){
+  var canvas = $("#mapCanvas");
+  var old = canvas.querySelector(".map-connections");
+  if(old) old.remove();
+  var svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.classList.add("map-connections");
+  svg.setAttribute("width","100%");
+  svg.setAttribute("height","100%");
+  svg.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:2;";
+  var published = STATE.locations.filter(function(l){ return l.status!=="draft"; });
+  var conns = [];
+  for(var i=0;i<published.length;i++){
+    for(var j=i+1;j<published.length;j++){
+      var a=published[i], b=published[j];
+      if(a.categoryId===b.categoryId){
+        var dx=a.mapX-b.mapX, dy=a.mapY-b.mapY;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<35) conns.push({x1:a.mapX,y1:a.mapY,x2:b.mapX,y2:b.mapY});
+      }
+    }
+  }
+  conns.forEach(function(c){
+    var line=document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1",c.x1+"%");line.setAttribute("y1",c.y1+"%");
+    line.setAttribute("x2",c.x2+"%");line.setAttribute("y2",c.y2+"%");
+    line.setAttribute("stroke","rgba(27,138,79,.2)");
+    line.setAttribute("stroke-width","2");
+    line.setAttribute("stroke-dasharray","6,4");
+    svg.appendChild(line);
+  });
+  canvas.appendChild(svg);
+}
+function renderMapLegend(){
+  var canvas = $("#mapCanvas");
+  var old = canvas.querySelector(".map-legend");
+  if(old) old.remove();
+  var published = STATE.locations.filter(function(l){ return l.status!=="draft"; });
+  if(published.length < 2) return;
+  var cats = {};
+  published.forEach(function(l){
+    var c = catById(l.categoryId);
+    if(c && !cats[c.id]) cats[c.id] = c;
+  });
+  var div = document.createElement("div");
+  div.className = "map-legend";
+  var html = '<h4>Legend</h4>';
+  for(var k in cats){
+    var c = cats[k];
+    html += '<div class="map-legend-item"><div class="legend-dot" style="background:'+c.color+'"></div>'+c.name+'</div>';
+  }
+  div.innerHTML = html;
+  canvas.appendChild(div);
+}
 function renderMapPage(){
   $("#mapCanvas").innerHTML = ensureMapImage();
   renderMapPins();
