@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 3000;
 
 const birthdayHTML = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf-8");
 
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("*", (req, res) => {
   res.send(birthdayHTML);
 });
