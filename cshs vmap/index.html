@@ -457,6 +457,17 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 .form-grid .full{grid-column:1/-1;}
 @media(max-width:640px){.form-grid{grid-template-columns:1fr;}}
 .upload-box{border:1.5px dashed var(--line);border-radius:12px;padding:16px;text-align:center;font-size:12.5px;color:var(--ink-500);cursor:pointer;position:relative;background:var(--paper-dim);}
+.upload-box.dragover{border-color:var(--red-600);background:#fdf0f2;color:var(--red-700);transform:scale(1.01);}
+.loc-card.dragover{outline:2px dashed var(--red-600);outline-offset:-4px;background:#fdf0f2;}
+.scene-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.scene-actions .btn{flex:1;min-width:120px;white-space:nowrap;}
+.scene-meta{font-size:12px;color:var(--ink-500);margin:4px 0 0;}
+.scene-meta .no-pano{color:var(--red-700);font-weight:700;}
+.voice-grid{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.voice-sliders{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;}
+.voice-sliders label{flex:1;min-width:180px;font-size:12.5px;font-weight:700;}
+.voice-sliders label span{font-weight:600;color:var(--ink-500);margin-left:6px;}
+.voice-sliders input[type=range]{width:100%;margin-top:6px;}
 .upload-box.has-img{padding:0;border-style:solid;overflow:hidden;height:120px;}
 .upload-box.has-img img{width:100%;height:100%;object-fit:cover;}
 .upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
@@ -947,7 +958,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
       <div class="admin-topline"><div><h2>Virtual tour management</h2><p>Upload panoramas per location and connect them with hotspots.</p></div></div>
       <div class="panel">
         <div class="panel-head"><h3>Scenes</h3></div>
-        <p style="font-size:12.5px;color:var(--ink-500);margin:0 0 14px;">Every location with a 360&deg; panorama becomes a scene automatically. Open a location to upload its panorama and manage its hotspots.</p>
+        <p style="font-size:12.5px;color:var(--ink-500);margin:0 0 14px;">Every location with a 360&deg; panorama becomes a scene automatically. Click a card to manage hotspots, use <strong>Add/Replace 360&deg;</strong> to drop in a panorama (or drag &amp; drop a file onto the card), and <strong>Edit photos</strong> to change covers and gallery pictures.</p>
         <div id="adminSceneList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div>
       </div>
     </div>
@@ -1040,6 +1051,24 @@ table.admintable tr:hover td{background:var(--paper-dim);}
         <div class="panel">
           <div class="panel-head"><h3>Spider-Man Narrator</h3></div>
           <p class="field-hint" style="margin-bottom:12px;">Edit what Spider-Man says for each location and the default greeting.</p>
+          <div class="field full">
+            <label>Voice</label>
+            <div class="voice-grid">
+              <select id="stVoice" style="flex:1;min-width:220px;"><option value="">Automatic (best available)</option></select>
+              <button type="button" class="btn btn-ghost btn-sm" id="stVoiceTest">&#9654; Test voice</button>
+            </div>
+          </div>
+          <div class="field full">
+            <div class="voice-sliders">
+              <label>Speed <span id="stVoiceRateVal">1.00&times;</span>
+                <input type="range" id="stVoiceRate" min="0.5" max="1.5" step="0.05" value="1">
+              </label>
+              <label>Pitch <span id="stVoicePitchVal">1.05</span>
+                <input type="range" id="stVoicePitch" min="0.5" max="1.5" step="0.05" value="1.05">
+              </label>
+            </div>
+            <p class="field-hint" style="margin-top:8px;">Voice choices come from your device &mdash; Chrome and Edge include the most. Adjust speed and pitch, press <strong>&#9654; Test voice</strong>, then <strong>Save changes</strong>.</p>
+          </div>
           <div class="field full"><label>Default greeting (when avatar is clicked)</label><textarea id="cfSpideyDefault" rows="3"></textarea></div>
           <div class="field full" style="margin-top:10px;"><label>Main Gate</label><textarea id="cfSpideyGate" rows="3"></textarea></div>
           <div class="field full" style="margin-top:10px;"><label>Principal's Office</label><textarea id="cfSpideyPrincipal" rows="3"></textarea></div>
@@ -1293,7 +1322,8 @@ var DEFAULT_SETTINGS = {
   schoolName: "Cabiao Senior High School",
   projectTitle: "Interactive Virtual Campus Tour",
   shortDescription: "Explore the laboratories, offices, and facilities of Cabiao Senior High School through an interactive digital campus map.",
-  logo: ""
+  logo: "",
+  narrator: { voiceURI: "", rate: 1, pitch: 1.05 }
 };
 
 var GROUPS = [
@@ -2478,9 +2508,8 @@ async function handleImageFiles(files, opts){
     toast("Upload failed: " + e.message);
   }
 }
-$("#lfCoverBox").querySelector("input").addEventListener("change", function(e){
-  var input = e.target;
-  handleImageFiles(input.files, { done: function(files){
+function onCoverFiles(files){
+  handleImageFiles(files, { done: function(files){
     pendingCover = files[0].url;
     updateUploadPreview("lfCoverBox", pendingCover, "");
     $("#lfCoverPreviewWrap").style.display = "block";
@@ -2489,11 +2518,9 @@ $("#lfCoverBox").querySelector("input").addEventListener("change", function(e){
     if(!exists) pendingGallery.unshift({ url: pendingCover, caption: "" });
     renderGalleryList();
   }});
-  input.value = "";
-});
-$("#lfPanoBox").querySelector("input").addEventListener("change", function(e){
-  var input = e.target;
-  handleImageFiles(input.files, { kind: "panorama", done: function(files){
+}
+function onPanoFiles(files){
+  handleImageFiles(files, { kind: "panorama", done: function(files){
     var f = files[0];
     pendingPano = f.url;
     updateUploadPreview("lfPanoBox", pendingPano, "");
@@ -2507,11 +2534,9 @@ $("#lfPanoBox").querySelector("input").addEventListener("change", function(e){
       info.style.color = "var(--danger)";
     }
   }});
-  input.value = "";
-});
-$("#lfGalleryInput").addEventListener("change", function(e){
-  var input = e.target;
-  handleImageFiles(input.files, { done: function(files){
+}
+function onGalleryFiles(files){
+  handleImageFiles(files, { done: function(files){
     files.forEach(function(f){ pendingGallery.push({ url: f.url, caption: "" }); });
     if(!pendingCover && pendingGallery.length){
       pendingCover = pendingGallery[0].url;
@@ -2522,8 +2547,36 @@ $("#lfGalleryInput").addEventListener("change", function(e){
     renderGalleryList();
     toast(files.length + " photo" + (files.length>1?"s":"") + " uploaded");
   }});
+}
+$("#lfCoverBox").querySelector("input").addEventListener("change", function(e){
+  var input = e.target;
+  onCoverFiles(input.files);
   input.value = "";
 });
+$("#lfPanoBox").querySelector("input").addEventListener("change", function(e){
+  var input = e.target;
+  onPanoFiles(input.files);
+  input.value = "";
+});
+$("#lfGalleryInput").addEventListener("change", function(e){
+  var input = e.target;
+  onGalleryFiles(input.files);
+  input.value = "";
+});
+function bindDropZone(boxId, onFiles){
+  var box = document.getElementById(boxId);
+  if(!box) return;
+  box.addEventListener("dragover", function(e){ e.preventDefault(); e.stopPropagation(); box.classList.add("dragover"); });
+  box.addEventListener("dragleave", function(){ box.classList.remove("dragover"); });
+  box.addEventListener("drop", function(e){
+    e.preventDefault(); e.stopPropagation();
+    box.classList.remove("dragover");
+    if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) onFiles(e.dataTransfer.files);
+  });
+}
+bindDropZone("lfCoverBox", onCoverFiles);
+bindDropZone("lfPanoBox", onPanoFiles);
+bindDropZone("lfGalleryBox", onGalleryFiles);
 $("#lfCoverRemove").addEventListener("click", function(){
   pendingCover = "";
   updateUploadPreview("lfCoverBox", "", "Click to upload a cover photo");
@@ -2684,14 +2737,62 @@ $("#mapUseDefaultBtn").addEventListener("click", async function(){
 });
 
 /* ---- Virtual tour / hotspot management ---- */
+var panoQuickInput = null;
+function startPanoUpload(locId){
+  if(!panoQuickInput){
+    panoQuickInput = document.createElement("input");
+    panoQuickInput.type = "file"; panoQuickInput.accept = "image/*";
+    panoQuickInput.style.display = "none";
+    document.body.appendChild(panoQuickInput);
+    panoQuickInput.addEventListener("change", function(e){
+      var files = e.target.files;
+      var lid = panoQuickInput.getAttribute("data-loc");
+      e.target.value = "";
+      if(files && files.length) quickUploadPano(lid, files);
+    });
+  }
+  panoQuickInput.setAttribute("data-loc", locId);
+  panoQuickInput.click();
+}
+function quickUploadPano(locId, files){
+  var loc = locById(locId);
+  if(!loc){ toast("Location not found"); return; }
+  toast("Uploading 360\u00b0 image\u2026");
+  handleImageFiles(files, { kind: "panorama", done: function(out){
+    if(!out.length) return;
+    loc.panorama = out[0].url;
+    saveLocations().then(function(){
+      toast(loc.name + ": 360\u00b0 image saved" + ((loc.hotspots||[]).length ? " (hotspots kept)" : ""));
+      renderAdminSceneList();
+    }).catch(function(err){ toast("Save failed: " + err.message); });
+  }});
+}
 function renderAdminSceneList(){
-  var scenes = scenesFromLocations();
-  $("#adminSceneList").innerHTML = scenes.map(function(l){
+  var list = STATE.locations.slice();
+  $("#adminSceneList").innerHTML = list.map(function(l){
+    var hasPano = !!l.panorama;
     return '<div class="loc-card" data-hs-open="'+l.id+'" style="cursor:pointer;">'+
       '<div class="loc-thumb" style="'+coverStyle(l)+'"><span class="cat-pill">'+((l.hotspots||[]).length)+' hotspot(s)</span></div>'+
-      '<div class="loc-body"><h3>'+esc(l.name)+'</h3><p>Click to manage hotspots</p></div></div>';
-  }).join("") || '<p style="color:var(--ink-500);font-size:13px;">No scenes yet — upload a 360° panorama when editing a location.</p>';
-  $all("[data-hs-open]").forEach(function(b){ b.onclick=function(){ openHotspotManager(this.getAttribute("data-hs-open")); }; });
+      '<div class="loc-body"><h3>'+esc(l.name)+'</h3>'+
+        '<p class="scene-meta">'+(hasPano ? '360\u00b0 ready' : '<span class="no-pano">No 360\u00b0 image yet</span>')+'</p>'+
+        '<div class="scene-actions">'+
+          '<button type="button" class="btn btn-ghost btn-sm" data-pano-btn="'+l.id+'">'+(hasPano?'Replace 360\u00b0':'Add 360\u00b0 image')+'</button>'+
+          '<button type="button" class="btn btn-ghost btn-sm" data-loc-edit-btn="'+l.id+'">Edit photos</button>'+
+        '</div>'+
+      '</div></div>';
+  }).join("") || '<p style="color:var(--ink-500);font-size:13px;">No locations yet \u2014 add one from Locations first.</p>';
+  $all("[data-hs-open]").forEach(function(b){
+    b.onclick = function(){ openHotspotManager(this.getAttribute("data-hs-open")); };
+    b.addEventListener("dragover", function(e){ e.preventDefault(); e.stopPropagation(); this.classList.add("dragover"); });
+    b.addEventListener("dragleave", function(){ this.classList.remove("dragover"); });
+    b.addEventListener("drop", function(e){
+      e.preventDefault(); e.stopPropagation();
+      this.classList.remove("dragover");
+      if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) quickUploadPano(this.getAttribute("data-hs-open"), e.dataTransfer.files);
+    });
+  });
+  $all("[data-pano-btn]").forEach(function(b){ b.onclick = function(e){ e.stopPropagation(); startPanoUpload(this.getAttribute("data-pano-btn")); }; });
+  $all("[data-loc-edit-btn]").forEach(function(b){ b.onclick = function(e){ e.stopPropagation(); openLocForm(this.getAttribute("data-loc-edit-btn")); }; });
 }
 var hsViewer=null, hsCurrentLocId=null, hsLoaded=false, hsPendingDraft=null;
 var HS_DRAFT_ID = "hs-draft";
@@ -2859,12 +2960,71 @@ function renderContentForm(){
   $("#cfSpideyClinic").value = sp["loc-clinic"] || '';
   $("#cfSpideyGuidance").value = sp["loc-guidance"] || '';
 }
+function allVoices(){
+  try{ return ('speechSynthesis' in window) ? (speechSynthesis.getVoices() || []) : []; }catch(e){ return []; }
+}
+function narratorVoiceCfg(){
+  var s = (STATE.settings && STATE.settings.narrator) || {};
+  return { voiceURI: s.voiceURI || "", rate: (typeof s.rate === "number" ? s.rate : 1), pitch: (typeof s.pitch === "number" ? s.pitch : 1.05) };
+}
+function populateVoiceSelect(){
+  var sel = $("#stVoice"); if(!sel) return;
+  var cur = narratorVoiceCfg().voiceURI;
+  var vs = allVoices();
+  var html = '<option value="">Automatic (best available)</option>' + vs.map(function(v){
+    return '<option value="'+esc(v.voiceURI)+'"'+(v.voiceURI===cur?' selected':'')+'>'+esc(v.name)+' &mdash; '+esc(v.lang||"")+'</option>';
+  }).join("");
+  if(cur && !vs.some(function(v){ return v.voiceURI === cur; })){
+    html += '<option value="'+esc(cur)+'" selected>Saved voice (not detected on this device)</option>';
+  }
+  sel.innerHTML = html;
+}
+function updateVoiceValLabels(){
+  var r = $("#stVoiceRate"), p = $("#stVoicePitch");
+  if(r) $("#stVoiceRateVal").textContent = parseFloat(r.value).toFixed(2) + "\u00d7";
+  if(p) $("#stVoicePitchVal").textContent = parseFloat(p.value).toFixed(2);
+}
+function previewNarratorVoice(voiceURI, rate, pitch){
+  try{
+    if(!('speechSynthesis' in window)){ toast("Voice preview is not supported in this browser"); return; }
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance("Thwip! This is how your tour guide will sound at Cabiao Senior High School!");
+    u.rate = rate; u.pitch = pitch; u.volume = 1;
+    if(voiceURI){
+      var vs = allVoices();
+      for(var i=0;i<vs.length;i++){ if(vs[i].voiceURI === voiceURI){ u.voice = vs[i]; break; } }
+    }
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function bindVoiceControls(){
+  populateVoiceSelect();
+  try{
+    if('speechSynthesis' in window && speechSynthesis.addEventListener){
+      speechSynthesis.addEventListener("voiceschanged", populateVoiceSelect);
+    }
+  }catch(e){}
+  var r = $("#stVoiceRate"), p = $("#stVoicePitch");
+  if(r) r.addEventListener("input", updateVoiceValLabels);
+  if(p) p.addEventListener("input", updateVoiceValLabels);
+  updateVoiceValLabels();
+  var t = $("#stVoiceTest");
+  if(t) t.addEventListener("click", function(){
+    previewNarratorVoice($("#stVoice").value, parseFloat(r.value) || 1, parseFloat(p.value) || 1.05);
+  });
+}
+bindVoiceControls();
 function loadSettingsForm(){
   renderContentForm();
   var s = STATE.settings || {};
   $("#stSchoolName").value = s.schoolName || "";
   $("#stProjectTitle").value = s.projectTitle || "";
   $("#stShortDesc").value = s.shortDescription || "";
+  var nv = narratorVoiceCfg();
+  if($("#stVoiceRate")) $("#stVoiceRate").value = nv.rate;
+  if($("#stVoicePitch")) $("#stVoicePitch").value = nv.pitch;
+  populateVoiceSelect();
+  updateVoiceValLabels();
   var logo = s.logo || "";
   var prev = $("#stLogoPreview");
   if(logo){ prev.src = logo; prev.style.display = "block"; $("#stLogoLabel").textContent = "Change site logo"; }
@@ -2908,7 +3068,12 @@ $("#settingsForm").addEventListener("submit", async function(e){
   STATE.settings = Object.assign({}, STATE.settings, {
     schoolName: $("#stSchoolName").value.trim() || "Cabiao Senior High School",
     projectTitle: $("#stProjectTitle").value.trim() || "Interactive Virtual Campus Tour",
-    shortDescription: $("#stShortDesc").value.trim()
+    shortDescription: $("#stShortDesc").value.trim(),
+    narrator: {
+      voiceURI: $("#stVoice") ? $("#stVoice").value : "",
+      rate: ($("#stVoiceRate") ? parseFloat($("#stVoiceRate").value) : 1) || 1,
+      pitch: ($("#stVoicePitch") ? parseFloat($("#stVoicePitch").value) : 1.05) || 1.05
+    }
   });
   try{
     await saveContent();
@@ -3130,18 +3295,31 @@ init();
     if(!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.9;
-    u.pitch = 1.0;
+    var nv = { voiceURI: "", rate: 1, pitch: 1.05 };
+    try{
+      if(typeof STATE !== 'undefined' && STATE && STATE.settings && STATE.settings.narrator){
+        var sn = STATE.settings.narrator;
+        nv.voiceURI = sn.voiceURI || "";
+        if(typeof sn.rate === 'number') nv.rate = sn.rate;
+        if(typeof sn.pitch === 'number') nv.pitch = sn.pitch;
+      }
+    }catch(e){}
+    u.rate = nv.rate;
+    u.pitch = nv.pitch;
     u.volume = 1;
     function pickVoice(){
       var voices = speechSynthesis.getVoices();
       if(!voices || !voices.length) return null;
+      if(nv.voiceURI){
+        for(var vi=0; vi<voices.length; vi++){
+          if(voices[vi].voiceURI === nv.voiceURI) return voices[vi];
+        }
+      }
       var best = [
-        'Microsoft David Desktop','Microsoft David',
-        'Google US English','Google UK English Male',
-        'Daniel','James','Alex','Guy','Microsoft Mark',
-        'Microsoft Zira Desktop','Microsoft Zira',
-        'Samantha','Victoria','Karen'
+        'Microsoft Aria','Microsoft Jenny','Microsoft Ava','Microsoft Guy',
+        'Google US English','Google UK English Female','Google UK English Male',
+        'Microsoft Zira Desktop','Microsoft Zira','Samantha','Karen','Victoria',
+        'Microsoft David Desktop','Microsoft David','Daniel','James','Alex','Guy','Microsoft Mark'
       ];
       for(var i=0;i<best.length;i++){
         var match = voices.find(function(v){ return v.name === best[i]; });
