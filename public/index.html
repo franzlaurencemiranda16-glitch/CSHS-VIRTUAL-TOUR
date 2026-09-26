@@ -3365,13 +3365,58 @@ init();
     }
   }
 
+  var mutedHintShown = false, noVoiceWarned = false, speakHeartbeat = 0;
+
+  function stopHeartbeat(){ if(speakHeartbeat){ clearInterval(speakHeartbeat); speakHeartbeat = 0; } }
+  function startHeartbeat(){
+    stopHeartbeat();
+    if(!('speechSynthesis' in window)) return;
+    speakHeartbeat = setInterval(function(){
+      try{
+        if(!('speechSynthesis' in window)){ stopHeartbeat(); return; }
+        if(speechSynthesis.speaking && !speechSynthesis.pending){
+          speechSynthesis.pause();
+          speechSynthesis.resume();
+        } else if(speechSynthesis.paused){
+          speechSynthesis.resume();
+        }
+      }catch(e){}
+    }, 9000);
+  }
+
+  var voicePrimed = false;
+  document.addEventListener('pointerdown', function(){
+    if(voicePrimed) return;
+    voicePrimed = true;
+    try{
+      if('speechSynthesis' in window){
+        var p = new SpeechSynthesisUtterance('.');
+        p.volume = 0;
+        speechSynthesis.speak(p);
+        speechSynthesis.resume();
+      }
+    }catch(e){}
+  }, true);
+
   function speak(text, force){
     if(!text) return;
     stop();
     setText(text);
     show();
-    if(!force && getSpeakingMode() === 'off') return;
-    if(!('speechSynthesis' in window)) return;
+    if(!force && getSpeakingMode() === 'off'){
+      if(!mutedHintShown){
+        mutedHintShown = true;
+        if(window.toast) window.toast('🔇 Spider-Man is muted — tap the speaker icon in his bubble to hear him');
+      }
+      return;
+    }
+    if(!('speechSynthesis' in window)){
+      if(!noVoiceWarned){
+        noVoiceWarned = true;
+        if(window.toast) window.toast("⚠️ This browser can't speak aloud — try Chrome or Edge");
+      }
+      return;
+    }
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     var nv = { voiceURI: "", rate: 1, pitch: 0.95 };
@@ -3413,13 +3458,35 @@ init();
     }
     var pick = pickVoice();
     if(pick) u.voice = pick;
-    u.onstart = function(){ if(spideyEl) spideyEl.classList.add('speaking'); };
-    u.onend = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
-    u.onerror = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); };
-    setTimeout(function(){ speechSynthesis.speak(u); }, 150);
+    else {
+      setTimeout(function(){
+        if(noVoiceWarned) return;
+        var vs = speechSynthesis.getVoices();
+        if(!vs || !vs.length){
+          noVoiceWarned = true;
+          if(window.toast) window.toast('⚠️ No voice installed in this browser — narration will be silent');
+        }
+      }, 1500);
+    }
+    u.onstart = function(){ if(spideyEl) spideyEl.classList.add('speaking'); try{ speechSynthesis.resume(); }catch(e){} };
+    u.onend = function(){ if(spideyEl) spideyEl.classList.remove('speaking'); stopHeartbeat(); };
+    u.onerror = function(ev){
+      if(spideyEl) spideyEl.classList.remove('speaking');
+      stopHeartbeat();
+      var err = ev && ev.error;
+      if(err && err !== 'interrupted' && err !== 'canceled' && window.toast){
+        window.toast('⚠️ Voice error: ' + err + ' — tap the speaker icon to retry');
+      }
+    };
+    startHeartbeat();
+    setTimeout(function(){
+      try{ speechSynthesis.resume(); }catch(e){}
+      try{ speechSynthesis.speak(u); }catch(e){}
+    }, 150);
   }
 
   function stop(){
+    stopHeartbeat();
     if('speechSynthesis' in window) speechSynthesis.cancel();
     if(spideyEl) spideyEl.classList.remove('speaking');
   }
