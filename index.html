@@ -293,6 +293,15 @@ a{color:inherit;}
   70%{box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 0 16px rgba(255,255,255,0);}
   100%{box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 0 0 rgba(255,255,255,0);}
 }
+/* hotspot editor: click-to-place hint + draft marker */
+.hs-place-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:7px 16px;border-radius:999px;font-size:12px;font-weight:600;pointer-events:none;z-index:6;transition:opacity .3s;}
+.hs-place-hint.hidden{opacity:0;}
+.nav-arrow.hs-draft{
+  background-color:var(--black-900);
+  border:3px dashed #fff;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23fff'%20stroke-width='3'%20stroke-linecap='round'%3E%3Cpath%20d='M12%205v14'/%3E%3Cpath%20d='M5%2012h14'/%3E%3C/svg%3E");
+  animation:navArrowPulse .9s ease-out infinite;
+}
 .pnlm-render-container .tooltip{background:var(--green-900)!important;color:#fff!important;border-radius:8px!important;padding:6px 14px!important;font-size:13px!important;font-weight:600!important;box-shadow:var(--shadow-md)!important;pointer-events:none!important;}
 .pnlm-render-container .tooltip span{color:#fff!important;}
 
@@ -1075,8 +1084,11 @@ table.admintable tr:hover td{background:var(--paper-dim);}
         <h3 id="hsTitle" style="margin:0;">Scene hotspots</h3>
         <button class="icon-mini" id="hsClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <p style="font-size:12.5px;color:var(--ink-500);margin:0 0 16px;">Preview this scene, note the pitch/yaw you'd like to place a hotspot at (drag the panorama below to explore, then estimate position), then add it.</p>
-      <div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:16px;background:#000;"><div id="hsPreviewPano" style="width:100%;height:100%;"></div></div>
+      <p style="font-size:12.5px;color:var(--ink-500);margin:0 0 16px;"><strong>Click anywhere inside the panorama</strong> to drop your arrow exactly where you want it (or type exact pitch/yaw numbers below), then choose the target scene and press <strong>Add hotspot</strong>.</p>
+      <div style="aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:16px;background:#000;position:relative;">
+        <div id="hsPreviewPano" style="width:100%;height:100%;"></div>
+        <div class="hs-place-hint" id="hsPlaceHint">Click in the panorama to place your arrow</div>
+      </div>
       <div id="hsList"></div>
       <div class="panel" style="background:var(--paper-dim);border:1px dashed var(--line);box-shadow:none;">
         <div class="form-grid">
@@ -2105,7 +2117,7 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
   else { document.exitFullscreen && document.exitFullscreen(); stage.classList.remove("fullscreen-active"); }
 });
 
-/* ---- Tour hotspot edit mode (admin) ---- */
+/* ---- Tour hotspot edit mode (admin): click the panorama to place a hotspot ---- */
 (function(){
   var editMode = false;
   var editBar = document.getElementById('tourEditBar');
@@ -2121,45 +2133,30 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
       editBar.style.display = 'none';
     }
   }
+  function setEditMode(on){
+    editMode = on;
+    document.getElementById('tourStage').classList.toggle('tour-edit-active', on);
+    editAddBtn.textContent = on ? 'Now click the panorama…' : '+ Add by clicking panorama';
+  }
   var origRenderTour = renderTourPage;
   renderTourPage = function(){
     origRenderTour();
     showEditBar();
-    editMode = false;
-    document.getElementById('tourStage').classList.remove('tour-edit-active');
+    setEditMode(false);
   };
-  editAddBtn.addEventListener('click', function(){
-    editMode = !editMode;
-    document.getElementById('tourStage').classList.toggle('tour-edit-active', editMode);
-    editAddBtn.textContent = editMode ? 'Click panorama to place...' : '+ Add by clicking panorama';
-    try{ if(editMode && viewerInstance){ viewerInstance.on('mousedown', handlePanoramaClick); } else if(viewerInstance && viewerInstance.off){ viewerInstance.off('mousedown', handlePanoramaClick); } }catch(e){}
-  });
-  editDoneBtn.addEventListener('click', function(){
-    editMode = false;
-    document.getElementById('tourStage').classList.remove('tour-edit-active');
-    editAddBtn.textContent = '+ Add by clicking panorama';
-    try{ if(viewerInstance && viewerInstance.off) viewerInstance.off('mousedown', handlePanoramaClick); }catch(e){}
-  });
-  function handlePanoramaClick(e){
+  editAddBtn.addEventListener('click', function(){ setEditMode(!editMode); });
+  editDoneBtn.addEventListener('click', function(){ setEditMode(false); });
+  bindClickToPlace('panoViewer', function(){ return viewerInstance; }, function(e){
     if(!editMode || !viewerInstance) return;
-    var yaw = viewerInstance.getYaw();
-    var pitch = viewerInstance.getPitch();
     var loc = locById(STATE.currentSceneLocId);
-    if(!loc) return;
-    var targetScenes = scenesFromLocations().filter(function(s){ return s.id !== loc.id; });
-    if(!targetScenes.length){ toast('Add another scene first'); return; }
-    var targetName = prompt('Hotspot label (e.g. "Go to Library"):');
-    if(!targetName) return;
-    var targetId = prompt('Target location ID:\n' + targetScenes.map(function(s,i){ return (i+1) + '. ' + s.name + ' (' + s.id + ')'; }).join('\n') + '\n\nEnter number or ID:');
-    if(!targetId) return;
-    var targetLoc = targetScenes[parseInt(targetId)-1] || locById(targetId.trim());
-    if(!targetLoc){ toast('Invalid target'); return; }
-    loc.hotspots = loc.hotspots || [];
-    loc.hotspots.push({id:uid('hs'), type:'scene', text:targetName, pitch:Math.round(pitch*10)/10, yaw:Math.round(yaw*10)/10, targetLocationId:targetLoc.id});
-    saveLocations();
-    loadScene(loc.id);
-    toast('Hotspot added: ' + targetName);
-  }
+    if(!loc){ toast('Open a scene first'); return; }
+    if(!scenesFromLocations().some(function(s){ return s.id !== loc.id; })){ toast('Add another scene with a panorama first'); return; }
+    var coords = panoClickCoords(document.getElementById('panoViewer'), viewerInstance, e)
+              || {pitch: viewerInstance.getPitch(), yaw: viewerInstance.getYaw()};
+    setEditMode(false);
+    openHotspotManager(loc.id, {pitch: coords.pitch, yaw: coords.yaw});
+    toast('Position set — pick the target scene, then Add hotspot');
+  });
   window._tourEditShowBar = showEditBar;
 })();
 
@@ -2629,22 +2626,97 @@ function renderAdminSceneList(){
   }).join("") || '<p style="color:var(--ink-500);font-size:13px;">No scenes yet — upload a 360° panorama when editing a location.</p>';
   $all("[data-hs-open]").forEach(function(b){ b.onclick=function(){ openHotspotManager(this.getAttribute("data-hs-open")); }; });
 }
-var hsViewer=null, hsCurrentLocId=null;
-function openHotspotManager(locId){
+var hsViewer=null, hsCurrentLocId=null, hsLoaded=false, hsPendingDraft=null;
+var HS_DRAFT_ID = "hs-draft";
+
+/* screen click -> panorama pitch/yaw (same math pannellum uses internally) */
+function panoClickCoords(container, viewer, e){
+  try{
+    var rect = container.getBoundingClientRect();
+    var w = rect.width, h = rect.height;
+    if(!w || !h || !viewer || !viewer.getHfov) return null;
+    var px = (e.clientX - rect.left) / w * 2 - 1;
+    var py = (1 - (e.clientY - rect.top) / h * 2) * h / w;
+    var hfov = viewer.getHfov(), pitchC = viewer.getPitch(), yawC = viewer.getYaw();
+    var focal = 1 / Math.tan(hfov * Math.PI / 360);
+    var s = Math.sin(pitchC * Math.PI/180), c = Math.cos(pitchC * Math.PI/180);
+    var a = focal * c - py * s;
+    var root = Math.sqrt(px*px + a*a);
+    var pitch = Math.atan((py*c + focal*s)/root) * 180/Math.PI;
+    var yaw = Math.atan2(px/root, a/root) * 180/Math.PI + yawC;
+    if(yaw < -180) yaw += 360;
+    if(yaw > 180) yaw -= 360;
+    return { pitch: Math.round(Math.max(-90, Math.min(90, pitch))*10)/10, yaw: Math.round(yaw*10)/10 };
+  }catch(err){ return null; }
+}
+/* click (not drag) on a pannellum container -> onPlace(event) */
+function bindClickToPlace(containerId, getViewer, onPlace){
+  var el = document.getElementById(containerId);
+  if(!el) return;
+  var down = null;
+  function start(x, y, target){
+    down = (target && target.tagName === "CANVAS") ? {x:x, y:y} : null;
+  }
+  function end(x, y){
+    if(!down) return;
+    var moved = Math.sqrt((x-down.x)*(x-down.x) + (y-down.y)*(y-down.y));
+    down = null;
+    if(moved > 6) return; /* drag = panorama pan, not a click */
+    onPlace({clientX:x, clientY:y});
+  }
+  el.addEventListener("mousedown", function(e){ start(e.clientX, e.clientY, e.target); });
+  el.addEventListener("mouseup", function(e){ end(e.clientX, e.clientY); });
+  el.addEventListener("touchstart", function(e){
+    if(e.touches.length === 1){ var t = e.touches[0]; start(t.clientX, t.clientY, e.target); }
+  }, {passive:true});
+  el.addEventListener("touchend", function(e){
+    if(e.changedTouches.length){ var t = e.changedTouches[0]; end(t.clientX, t.clientY); }
+  }, {passive:true});
+}
+function hsClearDraft(){
+  if(hsViewer){ try{ hsViewer.removeHotSpot(HS_DRAFT_ID); }catch(e){} }
+}
+function hsSetDraft(pitch, yaw){
+  if(!hsViewer) return;
+  if(!hsLoaded){ hsPendingDraft = {pitch:pitch, yaw:yaw}; return; }
+  hsClearDraft();
+  try{ hsViewer.addHotSpot({id:HS_DRAFT_ID, pitch:pitch, yaw:yaw, type:"info", cssClass:"nav-arrow hs-draft", text:"New position"}); }catch(e){}
+}
+function hsApplyInputs(){
+  var p = parseFloat($("#hsNewPitch").value), y = parseFloat($("#hsNewYaw").value);
+  if(isFinite(p) && isFinite(y)) hsSetDraft(p, y);
+}
+function hsPreviewHotspots(loc){
+  return (loc.hotspots||[]).map(function(h){
+    if(h.type==="scene"){ var t=locById(h.targetLocationId); return {id:h.id, pitch:h.pitch, yaw:h.yaw, type:"info", cssClass:"nav-arrow", text:"Go to "+((t&&t.name)||"another scene")}; }
+    return {id:h.id, pitch:h.pitch, yaw:h.yaw, type:"info", text:h.text};
+  });
+}
+function openHotspotManager(locId, preset){
   hsCurrentLocId = locId;
   var loc = locById(locId);
+  if(!loc) return;
+  if(!loc.panorama){ toast("Upload a 360° panorama for this location first"); return; }
   $("#hsTitle").textContent = "Hotspots — " + loc.name;
   $("#hsNewTarget").innerHTML = scenesFromLocations().filter(function(l){return l.id!==locId;}).map(function(l){ return '<option value="'+l.id+'">'+esc(l.name)+'</option>'; }).join("") || '<option value="">No other scenes yet</option>';
   renderHotspotList();
   $("#hsBackdrop").classList.remove("hidden");
+  $("#hsPlaceHint").classList.remove("hidden");
+  hsLoaded = false;
+  hsPendingDraft = preset || null;
+  if(preset){ $("#hsNewPitch").value = preset.pitch; $("#hsNewYaw").value = preset.yaw; }
+  else { $("#hsNewPitch").value = 0; $("#hsNewYaw").value = 0; }
   setTimeout(function(){
-    if(hsViewer){ try{hsViewer.destroy();}catch(e){} }
+    if(hsViewer){ try{hsViewer.destroy();}catch(e){} hsViewer = null; }
+    hsLoaded = false;
     hsViewer = window.pannellum.viewer("hsPreviewPano", {
       panorama: loc.panorama, autoLoad:true, type:"equirectangular",
-      hotSpots: (loc.hotspots||[]).map(function(h){
-        if(h.type==="scene"){ var t=locById(h.targetLocationId); return {pitch:h.pitch, yaw:h.yaw, type:"info", text:"Go to "+((t&&t.name)||"another scene")}; }
-        return {pitch:h.pitch, yaw:h.yaw, type:"info", text:h.text};
-      })
+      hotSpots: hsPreviewHotspots(loc)
+    });
+    hsViewer.on("load", function(){
+      hsLoaded = true;
+      var pd = hsPendingDraft; hsPendingDraft = null;
+      if(pd){ hsClearDraft(); hsSetDraft(pd.pitch, pd.yaw); $("#hsPlaceHint").classList.add("hidden"); }
     });
   }, 50);
 }
@@ -2653,6 +2725,19 @@ $("#hsNewType").addEventListener("change", function(){
   var isScene = this.value==="scene";
   $("#hsTargetWrap").style.display = isScene ? "" : "none";
   $("#hsInfoWrap").style.display = isScene ? "none" : "";
+});
+/* click inside the preview to set the hotspot position */
+bindClickToPlace("hsPreviewPano", function(){ return hsViewer; }, function(e){
+  if(!hsViewer) return;
+  var coords = panoClickCoords(document.getElementById("hsPreviewPano"), hsViewer, e);
+  if(!coords) return;
+  $("#hsNewPitch").value = coords.pitch;
+  $("#hsNewYaw").value = coords.yaw;
+  hsSetDraft(coords.pitch, coords.yaw);
+  $("#hsPlaceHint").classList.add("hidden");
+});
+["hsNewPitch","hsNewYaw"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", hsApplyInputs);
 });
 function renderHotspotList(){
   var loc = locById(hsCurrentLocId);
@@ -2679,10 +2764,9 @@ $("#hsAddBtn").addEventListener("click", function(){
   loc.hotspots = loc.hotspots || [];
   loc.hotspots.push(h);
   saveLocations().catch(function(e){ toast("Save failed: " + e.message); });
-  saveLocations();
   $("#hsNewText").value=""; $("#hsNewInfo").value=""; $("#hsNewPitch").value=0; $("#hsNewYaw").value=0;
   openHotspotManager(hsCurrentLocId);
-  toast("Hotspot added");
+  toast("Hotspot added" + (type==="scene" ? ": " + text : ""));
 });
 
 /* ---- Settings admin (branding + site content + narrator) ---- */
