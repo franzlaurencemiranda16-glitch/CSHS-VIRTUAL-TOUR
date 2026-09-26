@@ -1063,8 +1063,8 @@ table.admintable tr:hover td{background:var(--paper-dim);}
               <label>Speed <span id="stVoiceRateVal">1.00&times;</span>
                 <input type="range" id="stVoiceRate" min="0.5" max="1.5" step="0.05" value="1">
               </label>
-              <label>Pitch <span id="stVoicePitchVal">1.05</span>
-                <input type="range" id="stVoicePitch" min="0.5" max="1.5" step="0.05" value="1.05">
+              <label>Pitch <span id="stVoicePitchVal">0.95</span>
+                <input type="range" id="stVoicePitch" min="0.5" max="1.5" step="0.05" value="0.95">
               </label>
             </div>
             <p class="field-hint" style="margin-top:8px;">Voice choices come from your device &mdash; Chrome and Edge include the most. Adjust speed and pitch, press <strong>&#9654; Test voice</strong>, then <strong>Save changes</strong>.</p>
@@ -1323,7 +1323,7 @@ var DEFAULT_SETTINGS = {
   projectTitle: "Interactive Virtual Campus Tour",
   shortDescription: "Explore the laboratories, offices, and facilities of Cabiao Senior High School through an interactive digital campus map.",
   logo: "",
-  narrator: { voiceURI: "", rate: 1, pitch: 1.05 }
+  narrator: { voiceURI: "", rate: 1, pitch: 0.95 }
 };
 
 var GROUPS = [
@@ -2965,7 +2965,7 @@ function allVoices(){
 }
 function narratorVoiceCfg(){
   var s = (STATE.settings && STATE.settings.narrator) || {};
-  return { voiceURI: s.voiceURI || "", rate: (typeof s.rate === "number" ? s.rate : 1), pitch: (typeof s.pitch === "number" ? s.pitch : 1.05) };
+  return { voiceURI: s.voiceURI || "", rate: (typeof s.rate === "number" ? s.rate : 1), pitch: (typeof s.pitch === "number" ? s.pitch : 0.95) };
 }
 function populateVoiceSelect(){
   var sel = $("#stVoice"); if(!sel) return;
@@ -3010,7 +3010,7 @@ function bindVoiceControls(){
   updateVoiceValLabels();
   var t = $("#stVoiceTest");
   if(t) t.addEventListener("click", function(){
-    previewNarratorVoice($("#stVoice").value, parseFloat(r.value) || 1, parseFloat(p.value) || 1.05);
+    previewNarratorVoice($("#stVoice").value, parseFloat(r.value) || 1, parseFloat(p.value) || 0.95);
   });
 }
 bindVoiceControls();
@@ -3072,7 +3072,7 @@ $("#settingsForm").addEventListener("submit", async function(e){
     narrator: {
       voiceURI: $("#stVoice") ? $("#stVoice").value : "",
       rate: ($("#stVoiceRate") ? parseFloat($("#stVoiceRate").value) : 1) || 1,
-      pitch: ($("#stVoicePitch") ? parseFloat($("#stVoicePitch").value) : 1.05) || 1.05
+      pitch: ($("#stVoicePitch") ? parseFloat($("#stVoicePitch").value) : 0.95) || 0.95
     }
   });
   try{
@@ -3295,7 +3295,7 @@ init();
     if(!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
-    var nv = { voiceURI: "", rate: 1, pitch: 1.05 };
+    var nv = { voiceURI: "", rate: 1, pitch: 0.95 };
     try{
       if(typeof STATE !== 'undefined' && STATE && STATE.settings && STATE.settings.narrator){
         var sn = STATE.settings.narrator;
@@ -3316,10 +3316,10 @@ init();
         }
       }
       var best = [
-        'Microsoft Aria','Microsoft Jenny','Microsoft Ava','Microsoft Guy',
-        'Google US English','Google UK English Female','Google UK English Male',
-        'Microsoft Zira Desktop','Microsoft Zira','Samantha','Karen','Victoria',
-        'Microsoft David Desktop','Microsoft David','Daniel','James','Alex','Guy','Microsoft Mark'
+        'Microsoft Guy','Microsoft David','Microsoft Daniel','Microsoft Ryan','Microsoft George','Microsoft Richard','Microsoft Andrew','Microsoft Brian',
+        'Google UK English Male','Daniel','James','Alex','Guy','Microsoft Mark',
+        'Microsoft David Desktop','Microsoft Aria','Microsoft Jenny','Google US English',
+        'Microsoft Zira Desktop','Microsoft Zira','Samantha','Karen','Victoria'
       ];
       for(var i=0;i<best.length;i++){
         var match = voices.find(function(v){ return v.name === best[i]; });
