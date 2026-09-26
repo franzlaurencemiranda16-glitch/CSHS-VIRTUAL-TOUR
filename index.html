@@ -3305,9 +3305,8 @@ init();
       toast('Speaking mode off — tap the speaker icon anytime to turn it on');
     };
     var pref = getSpeakingMode();
-    if(pref === null){
-      setTimeout(function(){ if(getSpeakingMode() === null) showSpeakModePrompt(); }, 700);
-    } else if(pref === 'on'){
+    setTimeout(function(){ showSpeakModePrompt(); }, 700);
+    if(pref === 'on'){
       setTimeout(function(){ if(getSpeakingMode() === 'on') speakGreeting(); }, 900);
     }
     refreshVoiceBtn();
