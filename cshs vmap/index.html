@@ -273,10 +273,26 @@ a{color:inherit;}
 .scene-card .lb{padding:8px 10px;font-size:12px;font-weight:600;}
 .no-scenes{text-align:center;padding:60px 20px;color:var(--ink-500);}
 
-/* Pannellum hotspot styling */
-.pnlm-render-container .pnlm-sprite{width:44px!important;height:44px!important;filter:drop-shadow(0 0 8px rgba(34,163,94,.7));cursor:pointer;transition:transform .2s;}
-.pnlm-render-container .pnlm-sprite:hover{transform:scale(1.25)!important;filter:drop-shadow(0 0 14px rgba(34,163,94,1));}
+/* Pannellum hotspot styling — clickable "next location" arrows (reference style) */
+.pnlm-render-container .pnlm-sprite{width:44px!important;height:44px!important;filter:drop-shadow(0 0 8px rgba(200,16,46,.7));cursor:pointer;transition:transform .2s;}
+.pnlm-render-container .pnlm-sprite:hover{transform:scale(1.25)!important;filter:drop-shadow(0 0 14px rgba(200,16,46,1));}
 .pnlm-render-container .pnlm-hotspot{cursor:pointer!important;}
+.nav-arrow{
+  width:52px;height:52px;border-radius:50%;cursor:pointer!important;
+  background-color:var(--red-600);
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23fff'%20stroke-width='3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%2019V5'/%3E%3Cpath%20d='M5%2012l7-7%207%207'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:center;background-size:24px 24px;
+  border:3px solid #fff;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);
+  transition:transform .15s ease, background-color .15s ease;
+  animation:navArrowPulse 2.4s ease-out infinite;
+}
+.nav-arrow:hover{transform:scale(1.15);background-color:var(--black-900);}
+@keyframes navArrowPulse{
+  0%{box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 0 0 rgba(255,255,255,.7);}
+  70%{box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 0 16px rgba(255,255,255,0);}
+  100%{box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 0 0 rgba(255,255,255,0);}
+}
 .pnlm-render-container .tooltip{background:var(--green-900)!important;color:#fff!important;border-radius:8px!important;padding:6px 14px!important;font-size:13px!important;font-weight:600!important;box-shadow:var(--shadow-md)!important;pointer-events:none!important;}
 .pnlm-render-container .tooltip span{color:#fff!important;}
 
@@ -1955,33 +1971,67 @@ var viewerInstance = null;
 function scenesFromLocations(){
   return STATE.locations.filter(function(l){ return l.panorama && l.status!=="draft"; });
 }
+/* click an arrow -> turn toward it, then fade into the next location */
+var navTurning = false;
+function turnAndGo(fromId, targetId, pitch, yaw){
+  if(navTurning || !targetId || targetId === fromId) return;
+  var target = locById(targetId);
+  if(!target || !target.panorama) return;
+  navTurning = true;
+  var settled = false;
+  var finish = function(){
+    if(settled) return;
+    settled = true;
+    navTurning = false;
+    if(STATE.currentSceneLocId !== fromId) return; /* user already moved elsewhere */
+    loadScene(targetId);
+  };
+  try{
+    if(viewerInstance && typeof viewerInstance.lookAt === "function"){
+      viewerInstance.lookAt(pitch, yaw, undefined, 650, finish);
+      setTimeout(finish, 950);
+    } else { finish(); }
+  }catch(e){ finish(); }
+}
+function navArrow(pitch, yaw, fromId, target){
+  return {
+    pitch: pitch, yaw: yaw, type: "scene", cssClass: "nav-arrow",
+    text: "Go to " + target.name,
+    clickHandlerFunc: function(){ turnAndGo(fromId, target.id, pitch, yaw); }
+  };
+}
 function buildPannellumConfig(){
   var scenes = {};
   var allWithPanorama = scenesFromLocations();
   scenesFromLocations().forEach(function(loc){
-    var userHotspots = (loc.hotspots||[]).map(function(h){
-      var hs = {pitch:h.pitch, yaw:h.yaw, type: h.type==="scene"?"scene":"info", text: h.text};
-      if(h.type==="scene"){ hs.sceneId = h.targetLocationId; }
-      return hs;
-    });
-    var autoHotspots = [];
-    allWithPanorama.forEach(function(other){
-      if(other.id === loc.id) return;
-      var alreadyHas = userHotspots.some(function(h){ return h.sceneId === other.id; });
-      if(alreadyHas) return;
-      var dx = (other.mapX - loc.mapX);
-      var dy = (other.mapY - loc.mapY);
-      var dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist < 40){
-        var yaw = Math.atan2(dx, -dy) * (180/Math.PI);
-        autoHotspots.push({pitch:-5, yaw:yaw, type:"scene", text:"Go to " + other.name, sceneId:other.id});
+    var linked = {};
+    var hot = [];
+    (loc.hotspots||[]).forEach(function(h){
+      if(h.type === "scene"){
+        var target = locById(h.targetLocationId);
+        if(!target || !target.panorama || target.id === loc.id || linked[target.id]) return;
+        linked[target.id] = 1;
+        hot.push(navArrow(Number(h.pitch)||0, Number(h.yaw)||0, loc.id, target));
+      } else {
+        hot.push({pitch:h.pitch, yaw:h.yaw, type:"info", text:h.text});
       }
+    });
+    /* auto arrows to the nearest other panoramas so every scene is connected */
+    var others = allWithPanorama.filter(function(o){ return o.id !== loc.id && !linked[o.id]; });
+    others.sort(function(a,b){
+      function d2(o){ var dx=o.mapX-loc.mapX, dy=o.mapY-loc.mapY; return dx*dx+dy*dy; }
+      return d2(a) - d2(b);
+    });
+    others.slice(0, 4).forEach(function(other){
+      var dx = other.mapX - loc.mapX, dy = other.mapY - loc.mapY;
+      var yaw = Math.atan2(dx, -dy) * (180/Math.PI);
+      hot.push(navArrow(-18, yaw, loc.id, other));
     });
     scenes[loc.id] = {
       title: loc.name,
       type: "equirectangular",
       panorama: loc.panorama,
-      hotSpots: userHotspots.concat(autoHotspots)
+      hotSpots: hot
     };
   });
   return scenes;
@@ -1997,6 +2047,11 @@ function renderTourPage(){
   }
   $("#noScenesMsg").classList.add("hidden");
   $("#sceneStripWrap").classList.remove("hidden");
+  if(!window.pannellum || !window.pannellum.viewer){
+    $("#panoViewer").innerHTML = '<p class="no-scenes">The 360&deg; viewer library could not load. Check your internet connection and reload the page.</p>';
+    $("#tourSceneTitle").textContent = "Viewer unavailable";
+    return;
+  }
   var startId = STATE.currentSceneLocId && locById(STATE.currentSceneLocId) ? STATE.currentSceneLocId : scenes[0].id;
   var config = buildPannellumConfig();
   if(viewerInstance){ try{ viewerInstance.destroy(); }catch(e){} }
@@ -2586,7 +2641,10 @@ function openHotspotManager(locId){
     if(hsViewer){ try{hsViewer.destroy();}catch(e){} }
     hsViewer = window.pannellum.viewer("hsPreviewPano", {
       panorama: loc.panorama, autoLoad:true, type:"equirectangular",
-      hotSpots: (loc.hotspots||[]).map(function(h){return {pitch:h.pitch,yaw:h.yaw,type:"info",text:h.text};})
+      hotSpots: (loc.hotspots||[]).map(function(h){
+        if(h.type==="scene"){ var t=locById(h.targetLocationId); return {pitch:h.pitch, yaw:h.yaw, type:"info", text:"Go to "+((t&&t.name)||"another scene")}; }
+        return {pitch:h.pitch, yaw:h.yaw, type:"info", text:h.text};
+      })
     });
   }, 50);
 }
