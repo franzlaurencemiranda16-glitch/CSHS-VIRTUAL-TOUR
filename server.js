@@ -353,7 +353,8 @@ app.put("/api/categories", requireAuth, (req, res) => {
 
 app.put("/api/content", requireAuth, (req, res) => {
   if (!req.body || typeof req.body !== "object") return res.status(400).json({ error: "Invalid content" });
-  writeDB("content", req.body);
+  const current = readDB("content", DEFAULT_CONTENT);
+  writeDB("content", Object.assign({}, current, req.body));
   res.json({ ok: true });
 });
 

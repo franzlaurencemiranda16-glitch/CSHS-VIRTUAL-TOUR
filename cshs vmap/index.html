@@ -1310,9 +1310,9 @@ async function loadAll(){
     var set = await apiGet("/api/settings");
     STATE.locations = Array.isArray(loc) && loc.length ? loc : DEFAULT_LOCATIONS.slice();
     STATE.categories = Array.isArray(cat) && cat.length ? cat : DEFAULT_CATEGORIES.slice();
-    STATE.content = (con && con.schoolName) ? con : Object.assign({}, DEFAULT_CONTENT);
+    STATE.content = Object.assign({}, DEFAULT_CONTENT, (con && con.schoolName) ? con : {});
     STATE.mapImage = (map && map.url) ? map.url : null;
-    STATE.settings = (set && set.schoolName) ? set : Object.assign({}, DEFAULT_SETTINGS);
+    STATE.settings = Object.assign({}, DEFAULT_SETTINGS, (set && set.schoolName) ? set : {});
     if(!Array.isArray(loc) || !loc.length) await saveLocations();
     if(!Array.isArray(cat) || !cat.length) await saveCategories();
   }catch(e){
