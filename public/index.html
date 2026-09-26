@@ -254,6 +254,31 @@ a{color:inherit;}
 .tour-page{padding:0 0 76px;}
 .tour-stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
 .tour-stage.fullscreen-active{border-radius:0;}
+.tour-transition{position:absolute;inset:0;z-index:150;pointer-events:none;opacity:0;visibility:hidden;}
+.tour-transition.playing,.tour-transition.leaving{opacity:1;visibility:visible;pointer-events:auto;}
+.tt-panel{position:absolute;top:-15%;height:130%;width:64%;}
+.tt-a{left:0;background:#0b0b0c;transform:translateX(-112%) skewX(-9deg);}
+.tt-b{right:0;background:var(--red-600);transform:translateX(112%) skewX(-9deg);}
+.tt-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;opacity:0;padding:0 24px;}
+.tt-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.78);}
+.tt-name{font-size:clamp(24px,4.4vw,44px);font-weight:900;color:#fff;letter-spacing:-.01em;text-shadow:0 4px 26px rgba(0,0,0,.4);max-width:84%;}
+.tt-line{width:66px;height:4px;border-radius:99px;background:#fff;transform:scaleX(0);transform-origin:center;}
+.tour-transition.playing .tt-a{animation:ttInL .46s cubic-bezier(.76,0,.24,1) forwards;}
+.tour-transition.playing .tt-b{animation:ttInR .46s cubic-bezier(.76,0,.24,1) .05s forwards;}
+.tour-transition.playing .tt-content{animation:ttTextIn .42s cubic-bezier(.2,.8,.2,1) .4s forwards;}
+.tour-transition.playing .tt-line{animation:ttLineIn .5s cubic-bezier(.2,.8,.2,1) .52s forwards;}
+.tour-transition.leaving .tt-a{transform:translateX(0) skewX(-9deg);animation:ttOutL .52s cubic-bezier(.76,0,.24,1) .06s forwards;}
+.tour-transition.leaving .tt-b{transform:translateX(0) skewX(-9deg);animation:ttOutR .52s cubic-bezier(.76,0,.24,1) forwards;}
+.tour-transition.leaving .tt-content{animation:ttTextOut .26s ease forwards;}
+.tour-transition.leaving .tt-line{animation:ttLineOut .26s ease forwards;}
+@keyframes ttInL{from{transform:translateX(-112%) skewX(-9deg);}to{transform:translateX(0) skewX(-9deg);}}
+@keyframes ttInR{from{transform:translateX(112%) skewX(-9deg);}to{transform:translateX(0) skewX(-9deg);}}
+@keyframes ttOutL{from{transform:translateX(0) skewX(-9deg);}to{transform:translateX(-112%) skewX(-9deg);}}
+@keyframes ttOutR{from{transform:translateX(0) skewX(-9deg);}to{transform:translateX(112%) skewX(-9deg);}}
+@keyframes ttTextIn{from{opacity:0;transform:translateY(16px) scale(.94);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttTextOut{from{opacity:1;transform:translateY(0) scale(1);}to{opacity:0;transform:translateY(-12px) scale(.97);}}
+@keyframes ttLineIn{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+@keyframes ttLineOut{from{transform:scaleX(1);}to{transform:scaleX(0);}}
 #panoViewer{width:100%;height:100%;}
 #panoViewer .pnlm-container{z-index:1!important;}
 #panoViewer canvas{pointer-events:auto;}
@@ -726,6 +751,15 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <button class="icon-btn" id="tourNextBtn" title="Next location" aria-label="Next location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="icon-btn" id="tourMapBtn" title="Back to campus map" aria-label="Back to campus map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13M15 7v13"/></svg></button>
           <button class="icon-btn" id="tourFullscreenBtn" title="Fullscreen" aria-label="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg></button>
+        </div>
+      </div>
+      <div class="tour-transition" id="tourTransition">
+        <div class="tt-panel tt-a"></div>
+        <div class="tt-panel tt-b"></div>
+        <div class="tt-content">
+          <span class="tt-eyebrow">Now entering</span>
+          <strong class="tt-name" id="ttName">&mdash;</strong>
+          <span class="tt-line"></span>
         </div>
       </div>
     </div>
@@ -2048,7 +2082,38 @@ function buildPannellumConfig(){
   });
   return scenes;
 }
+var TT = {playing:false, hideAt:0, timer:null};
+function resetTourTransition(){
+  clearTimeout(TT.timer); TT.timer=null; TT.playing=false; TT.hideAt=0;
+  var el=$("#tourTransition");
+  if(el){ el.classList.remove("playing"); el.classList.remove("leaving"); }
+}
+function playTourTransition(name){
+  var el=$("#tourTransition"); if(!el) return;
+  $("#ttName").textContent = name || "Next location";
+  TT.hideAt = Date.now() + 950;
+  if(!TT.playing){
+    TT.playing = true;
+    el.classList.remove("leaving");
+    void el.offsetWidth;
+    el.classList.add("playing");
+  }
+  clearTimeout(TT.timer);
+  TT.timer = setTimeout(endTourTransition, 5000);
+}
+function endTourTransition(){
+  if(!TT.playing) return;
+  var wait = TT.hideAt - Date.now();
+  if(wait > 0){ clearTimeout(TT.timer); TT.timer = setTimeout(endTourTransition, wait + 20); return; }
+  clearTimeout(TT.timer);
+  TT.playing = false;
+  var el=$("#tourTransition"); if(!el) return;
+  el.classList.remove("playing");
+  el.classList.add("leaving");
+  TT.timer = setTimeout(function(){ TT.timer=null; el.classList.remove("leaving"); }, 600);
+}
 function renderTourPage(){
+  resetTourTransition();
   var scenes = scenesFromLocations();
   if(scenes.length===0){
     $("#panoViewer").innerHTML="";
@@ -2076,7 +2141,9 @@ function renderTourPage(){
     var loc = locById(sceneId);
     $("#tourSceneTitle").textContent = loc ? loc.name : "—";
     renderSceneStrip();
+    playTourTransition(loc ? loc.name : "");
   });
+  viewerInstance.on("scenechangefadedone", endTourTransition);
   STATE.currentSceneLocId = startId;
   $("#tourSceneTitle").textContent = locById(startId).name;
   renderSceneStrip();
