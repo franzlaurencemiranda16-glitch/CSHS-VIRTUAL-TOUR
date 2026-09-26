@@ -1371,6 +1371,10 @@ function onSessionExpired(){
   if(!STATE.isAdmin) return;
   STATE.isAdmin = false;
   setAuthToken("");
+  if(window._tourEditShowBar) window._tourEditShowBar();
+  var hsBack = document.getElementById("hsBackdrop");
+  var hsClose = document.getElementById("hsClose");
+  if(hsBack && hsClose && !hsBack.classList.contains("hidden")) hsClose.click();
   toast("Session expired — please sign in again");
   goto("admin-login");
 }
@@ -2246,9 +2250,11 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
       editBar.style.display = 'flex';
     } else {
       editBar.style.display = 'none';
+      if(editMode) setEditMode(false);
     }
   }
   function setEditMode(on){
+    if(on && !isAdmin()) on = false;
     editMode = on;
     document.getElementById('tourStage').classList.toggle('tour-edit-active', on);
     editAddBtn.textContent = on ? 'Now click the panorama…' : '+ Add by clicking panorama';
@@ -2259,10 +2265,10 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
     showEditBar();
     setEditMode(false);
   };
-  editAddBtn.addEventListener('click', function(){ setEditMode(!editMode); });
+  editAddBtn.addEventListener('click', function(){ if(!isAdmin()){ showEditBar(); return; } setEditMode(!editMode); });
   editDoneBtn.addEventListener('click', function(){ setEditMode(false); });
   bindClickToPlace('panoViewer', function(){ return viewerInstance; }, function(e){
-    if(!editMode || !viewerInstance) return;
+    if(!editMode || !isAdmin() || !viewerInstance) return;
     var loc = locById(STATE.currentSceneLocId);
     if(!loc){ toast('Open a scene first'); return; }
     if(!scenesFromLocations().some(function(s){ return s.id !== loc.id; })){ toast('Add another scene with a panorama first'); return; }
@@ -2327,6 +2333,7 @@ $("#adminLogoutBtn").addEventListener("click", async function(){
   try{ await apiSend("POST", "/api/auth/logout", null); }catch(e){}
   setAuthToken("");
   STATE.isAdmin = false;
+  if(window._tourEditShowBar) window._tourEditShowBar();
   goto("home");
   toast("Signed out");
 });
@@ -2879,6 +2886,7 @@ function hsPreviewHotspots(loc){
   });
 }
 function openHotspotManager(locId, preset){
+  if(!STATE.isAdmin){ toast("Only the admin can edit hotspot points"); return; }
   hsCurrentLocId = locId;
   var loc = locById(locId);
   if(!loc) return;
