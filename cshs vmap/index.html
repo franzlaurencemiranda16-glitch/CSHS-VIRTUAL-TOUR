@@ -1087,6 +1087,20 @@ table.admintable tr:hover td{background:var(--paper-dim);}
   </div>
 </div>
 
+<!-- ============ SPEAKING MODE PROMPT ============ -->
+<div class="speak-modal hidden" id="speakModeModal">
+  <div class="speak-modal-card">
+    <div class="speak-modal-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></div>
+    <h3>Turn on speaking mode?</h3>
+    <p>Hi, I'm <strong>Spider-Man</strong> &mdash; your campus tour guide! Want me to <strong>speak aloud</strong> as you explore Cabiao Senior High School?</p>
+    <div class="speak-modal-actions">
+      <button class="btn btn-green" id="speakModeYes">Yes, turn on voice</button>
+      <button class="btn btn-ghost" id="speakModeNo">No, stay silent</button>
+    </div>
+    <div class="speak-modal-hint">You can switch anytime using the speaker icon in the corner.</div>
+  </div>
+</div>
+
 <!-- ============ LOCATION EDIT DRAWER (shared add/edit form) ============ -->
 <div class="modal-backdrop hidden" id="locFormBackdrop">
   <div class="modal" style="max-width:640px;">
@@ -1453,6 +1467,10 @@ function toast(msg){
   clearTimeout(toast._tm);
   toast._tm = setTimeout(function(){ t.classList.remove("show"); }, 2200);
 }
+/* bridges for the narrator IIFE (it lives outside this scope) */
+window.toast = toast;
+window._narratorVoiceCfg = narratorVoiceCfg;
+window._spideyContent = function(){ return (STATE.content && STATE.content.spidey) || {}; };
 function coverStyle(loc){
   if(loc.cover) return "background-image:url('"+loc.cover+"')";
   var c = catById(loc.categoryId);
@@ -3225,8 +3243,12 @@ init();
   };
   var DEFAULT_GREETING = "Thwip! What's up, friendly neighborhood student! I'm Spiderman, your virtual tour guide here at Cabiao Senior High School! Tap any location on the map or click a card and I'll tell you all about it. Let's swing through this campus together!";
   var DESCS = {};
+  function spideyStore(){
+    try{ if(typeof window._spideyContent === 'function') return window._spideyContent() || {}; }catch(e){}
+    return {};
+  }
   function loadDescs(){
-    var sp = (typeof STATE !== 'undefined' && STATE && STATE.content && STATE.content.spidey) || {};
+    var sp = spideyStore();
     DESCS = {};
     for(var k in DEFAULT_DESCS){
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
@@ -3234,7 +3256,7 @@ init();
   }
   loadDescs();
   window._updateSpideyDescs = function(){
-    var sp = (typeof STATE !== 'undefined' && STATE && STATE.content && STATE.content.spidey) || {};
+    var sp = spideyStore();
     for(var k in DEFAULT_DESCS){
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
     }
@@ -3243,6 +3265,45 @@ init();
   var DEFAULT_DESC = DESCS["default"] || DEFAULT_GREETING;
   var spideyEl = null, bubbleEl = null, textEl = null, avatarEl = null;
   var spokenOnce = false;
+  var voiceBtn = null;
+  var SPEAK_MODE_KEY = 'cshs-speaking-mode';
+
+  function getSpeakingMode(){ try{ return localStorage.getItem(SPEAK_MODE_KEY); }catch(e){ return null; } }
+  function setSpeakingMode(v){ try{ v ? localStorage.setItem(SPEAK_MODE_KEY, v) : localStorage.removeItem(SPEAK_MODE_KEY); }catch(e){} }
+  function refreshVoiceBtn(){
+    if(!voiceBtn) return;
+    var off = getSpeakingMode() === 'off';
+    voiceBtn.innerHTML = off ? '&#128263;' : '&#128266;';
+    voiceBtn.title = off ? 'Speaking mode off — click to turn on' : 'Speaking mode on — click to turn off';
+  }
+  function showSpeakModePrompt(){ var m = document.getElementById('speakModeModal'); if(m) m.classList.remove('hidden'); }
+  function hideSpeakModePrompt(){ var m = document.getElementById('speakModeModal'); if(m) m.classList.add('hidden'); }
+  function speakGreeting(){
+    loadDescs();
+    DEFAULT_DESC = DESCS['default'] || DEFAULT_GREETING;
+    spokenOnce = true;
+    speak(DEFAULT_DESC);
+  }
+  function initSpeakingMode(){
+    var yes = document.getElementById('speakModeYes');
+    var no = document.getElementById('speakModeNo');
+    if(yes) yes.onclick = function(){
+      setSpeakingMode('on'); hideSpeakModePrompt(); refreshVoiceBtn();
+      toast('Speaking mode on');
+      speakGreeting();
+    };
+    if(no) no.onclick = function(){
+      setSpeakingMode('off'); hideSpeakModePrompt(); refreshVoiceBtn();
+      toast('Speaking mode off — tap the speaker icon anytime to turn it on');
+    };
+    var pref = getSpeakingMode();
+    if(pref === null){
+      setTimeout(function(){ if(getSpeakingMode() === null) showSpeakModePrompt(); }, 700);
+    } else if(pref === 'on'){
+      setTimeout(function(){ if(getSpeakingMode() === 'on') speakGreeting(); }, 900);
+    }
+    refreshVoiceBtn();
+  }
 
   function createUI(){
     var d = document.createElement('div');
@@ -3250,6 +3311,7 @@ init();
     d.innerHTML =
       '<div class="spidey-bubble" id="spideyBubble">'+
         '<div class="spidey-bubble-text" id="spideyText">Thwip! Hey there! I am Spiderman! Tap me or click any location to hear about it!</div>'+
+        '<button class="spidey-voice-btn" id="spideyVoiceToggle" title="Speaking mode on — click to turn off">&#128266;</button>'+
         '<button class="spidey-speak-btn" id="spideySpeakBtn" title="Hear it aloud">&#128266;</button>'+
         '<button class="spidey-bubble-close" id="spideyClose" aria-label="Close">&times;</button>'+
       '</div>'+
@@ -3266,7 +3328,16 @@ init();
     avatarEl = document.getElementById('spideyAvatar');
 
     document.getElementById('spideyClose').onclick = function(){ hide(); };
-    document.getElementById('spideySpeakBtn').onclick = function(){ speak(textEl.textContent); };
+    document.getElementById('spideySpeakBtn').onclick = function(){ speak(textEl.textContent, true); };
+    voiceBtn = document.getElementById('spideyVoiceToggle');
+    if(voiceBtn) voiceBtn.onclick = function(){
+      if(getSpeakingMode() === 'off'){
+        setSpeakingMode('on'); refreshVoiceBtn(); toast('Speaking mode on'); speak(textEl.textContent, true);
+      } else {
+        setSpeakingMode('off'); stop(); refreshVoiceBtn(); toast('Speaking mode off');
+      }
+    };
+    refreshVoiceBtn();
     avatarEl.onclick = function(){
       show();
       if(!spokenOnce){
@@ -3287,21 +3358,22 @@ init();
     }
   }
 
-  function speak(text){
+  function speak(text, force){
     if(!text) return;
     stop();
     setText(text);
     show();
+    if(!force && getSpeakingMode() === 'off') return;
     if(!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     var nv = { voiceURI: "", rate: 1, pitch: 0.95 };
     try{
-      if(typeof STATE !== 'undefined' && STATE && STATE.settings && STATE.settings.narrator){
-        var sn = STATE.settings.narrator;
-        nv.voiceURI = sn.voiceURI || "";
-        if(typeof sn.rate === 'number') nv.rate = sn.rate;
-        if(typeof sn.pitch === 'number') nv.pitch = sn.pitch;
+      if(typeof window._narratorVoiceCfg === 'function'){
+        var c = window._narratorVoiceCfg();
+        nv.voiceURI = c.voiceURI || "";
+        if(typeof c.rate === 'number') nv.rate = c.rate;
+        if(typeof c.pitch === 'number') nv.pitch = c.pitch;
       }
     }catch(e){}
     u.rate = nv.rate;
@@ -3364,8 +3436,8 @@ init();
   });
 
   // Init
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', createUI);
-  else createUI();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ createUI(); initSpeakingMode(); });
+  else { createUI(); initSpeakingMode(); }
 })();
 
 /* ---- Dynamic image loading ---- */
@@ -3396,7 +3468,7 @@ init();
   position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:flex-end;gap:12px;
 }
 .spidey-bubble{
-  background:#fff;border-radius:18px;border-bottom-right-radius:4px;padding:14px 44px 14px 16px;
+  background:#fff;border-radius:18px;border-bottom-right-radius:4px;padding:14px 66px 14px 16px;
   max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.2);position:relative;
   border:2px solid #e62117;display:none;
 }
@@ -3417,6 +3489,20 @@ init();
   cursor:pointer;padding:4px 8px;border-radius:50%;transition:.15s;
 }
 .spidey-speak-btn:hover{background:#f0f0f0;transform:scale(1.15);}
+.spidey-voice-btn{
+  position:absolute;top:6px;right:36px;background:none;border:none;font-size:15px;
+  cursor:pointer;padding:4px 6px;border-radius:50%;transition:.15s;
+}
+.spidey-voice-btn:hover{background:#f0f0f0;transform:scale(1.15);}
+.speak-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:rgba(9,12,16,.62);padding:20px;}
+.speak-modal-card{background:#fff;border-radius:20px;max-width:400px;width:100%;padding:30px 26px 24px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:speakPop .35s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes speakPop{from{opacity:0;transform:translateY(16px) scale(.94);}to{opacity:1;transform:none;}}
+.speak-modal-badge{width:56px;height:56px;border-radius:50%;background:var(--red-600);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.speak-modal-badge svg{width:26px;height:26px;}
+.speak-modal-card h3{margin:0 0 8px;font-size:20px;font-weight:900;letter-spacing:-.01em;}
+.speak-modal-card p{margin:0 0 20px;font-size:14px;line-height:1.55;color:var(--ink-500);}
+.speak-modal-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.speak-modal-hint{font-size:11.5px;color:var(--ink-500);margin-top:14px;}
 .spidey-avatar{
   width:80px;height:80px;border-radius:50%;background:#e62117;border:3px solid #fff;
   box-shadow:0 4px 20px rgba(230,33,23,.5);cursor:pointer;flex-shrink:0;
