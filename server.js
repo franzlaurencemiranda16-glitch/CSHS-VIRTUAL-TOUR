@@ -250,7 +250,7 @@ async function processImage(buffer, opts) {
     const out = await pipeline.png({ compressionLevel: 9 }).toBuffer();
     return { buffer: out, ext: "png", width: (meta.width > maxW ? maxW : meta.width), height: Math.round((meta.height || 0) * (meta.width > maxW ? maxW / meta.width : 1)) };
   }
-  const out = await pipeline.jpeg({ quality: opts.quality || 90, chromaSubsampling: "4:4:4" }).toBuffer();
+  const out = await pipeline.jpeg({ quality: opts.quality || 90, chromaSubsampling: "4:4:4", progressive: !!opts.progressive }).toBuffer();
   const scaled = meta.width > maxW ? maxW / meta.width : 1;
   return { buffer: out, ext: "jpg", width: Math.round(w * scaled), height: Math.round((meta.height || 0) * scaled) };
 }
@@ -386,8 +386,9 @@ app.post("/api/upload", requireAuth, (req, res) => {
       const results = [];
       for (const f of req.files) {
         const r = await saveUpload(f.buffer, f.originalname, {
-          maxWidth: isPano ? 8000 : 2400,
-          quality: isPano ? 89 : 90
+          maxWidth: isPano ? 16384 : 2400,
+          quality: isPano ? 95 : 90,
+          progressive: isPano
         });
         results.push(r);
       }
