@@ -1934,19 +1934,70 @@ function applyMapTransform(){
 function setupPanZoom(viewportId, canvasId, controls){
   var viewport = document.getElementById(viewportId);
   var canvas = document.getElementById(canvasId);
+  if(viewport._panZoom) return viewport._panZoom;
   var t = {scale:1, x:0, y:0};
   function apply(){ canvas.style.transform = "translate("+t.x+"px,"+t.y+"px) scale("+t.scale+")"; }
   function clampScale(s){ return Math.max(0.6, Math.min(3.2, s)); }
+  var animId = null;
+  function cancelAnim(){ if(animId){ cancelAnimationFrame(animId); animId = null; } }
+  function zoomAtPoint(sNew, vx, vy){
+    sNew = clampScale(sNew);
+    var k = sNew / t.scale;
+    t.x = vx - (vx - t.x) * k;
+    t.y = vy - (vy - t.y) * k;
+    t.scale = sNew;
+    apply();
+  }
+  function animateZoomTo(sTarget, clientX, clientY, dur){
+    var rect = viewport.getBoundingClientRect();
+    var vx = clientX - rect.left, vy = clientY - rect.top;
+    var s1 = clampScale(sTarget), s0 = t.scale;
+    if(s1 === s0) return;
+    var x0 = t.x, y0 = t.y;
+    cancelAnim();
+    var start = null;
+    dur = dur || 180;
+    function step(now){
+      if(start === null) start = now;
+      var p = Math.min(1, (now - start) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      var s = s0 + (s1 - s0) * e;
+      var k = s / s0;
+      t.scale = s;
+      t.x = vx - (vx - x0) * k;
+      t.y = vy - (vy - y0) * k;
+      apply();
+      animId = p < 1 ? requestAnimationFrame(step) : null;
+    }
+    animId = requestAnimationFrame(step);
+  }
+  function centerClient(){
+    var r = viewport.getBoundingClientRect();
+    return {x: r.left + r.width / 2, y: r.top + r.height / 2};
+  }
 
   var dragging=false, lastX=0, lastY=0;
   var pointers = {};
   var pinchDist = 0, pinchScale = 1;
+  var lastTapAt = 0, lastTapX = 0, lastTapY = 0, lastDoubleTapAt = 0;
   function pointerCount(){ return Object.keys(pointers).length; }
 
   viewport.addEventListener("pointerdown", function(e){
-    pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
+    pointers[e.pointerId] = {x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY};
     if(e.target.closest(".pin")) return;
+    cancelAnim();
     if(pointerCount() === 1){
+      if(e.pointerType !== "mouse"){
+        var now = Date.now();
+        if(now - lastTapAt < 300 && Math.abs(e.clientX - lastTapX) < 44 && Math.abs(e.clientY - lastTapY) < 44){
+          lastTapAt = 0;
+          lastDoubleTapAt = now;
+          viewport.setPointerCapture(e.pointerId);
+          animateZoomTo(t.scale * 2, e.clientX, e.clientY, 240);
+          return;
+        }
+        lastTapAt = now; lastTapX = e.clientX; lastTapY = e.clientY;
+      }
       dragging = true; lastX = e.clientX; lastY = e.clientY;
       viewport.classList.add("grabbing");
       viewport.setPointerCapture(e.pointerId);
@@ -1960,20 +2011,23 @@ function setupPanZoom(viewportId, canvasId, controls){
   });
   viewport.addEventListener("pointermove", function(e){
     if(!(e.pointerId in pointers)) return;
-    pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
+    pointers[e.pointerId].x = e.clientX; pointers[e.pointerId].y = e.clientY;
     if(pointerCount() >= 2){
       var ids = Object.keys(pointers);
       var p1 = pointers[ids[0]], p2 = pointers[ids[1]];
       var d = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)) || 1;
-      t.scale = clampScale(pinchScale * (d / pinchDist));
-      apply();
+      var rect = viewport.getBoundingClientRect();
+      zoomAtPoint(pinchScale * (d / pinchDist), (p1.x + p2.x) / 2 - rect.left, (p1.y + p2.y) / 2 - rect.top);
       return;
     }
     if(!dragging) return;
+    cancelAnim();
     t.x += (e.clientX-lastX); t.y += (e.clientY-lastY);
     lastX=e.clientX; lastY=e.clientY; apply();
   });
   function releasePointer(e){
+    var rec = pointers[e.pointerId];
+    if(rec && Math.sqrt(Math.pow(e.clientX-rec.sx,2)+Math.pow(e.clientY-rec.sy,2)) > 10) lastTapAt = 0;
     delete pointers[e.pointerId];
     dragging = false;
     viewport.classList.remove("grabbing");
@@ -1985,21 +2039,26 @@ function setupPanZoom(viewportId, canvasId, controls){
   });
   viewport.addEventListener("wheel", function(e){
     e.preventDefault();
-    var delta = e.deltaY > 0 ? -0.12 : 0.12;
-    t.scale = clampScale(t.scale + delta);
-    apply();
+    animateZoomTo(t.scale + (e.deltaY > 0 ? -0.12 : 0.12), e.clientX, e.clientY, 140);
   }, {passive:false});
+  viewport.addEventListener("dblclick", function(e){
+    if(e.target.closest(".pin")) return;
+    if(Date.now() - lastDoubleTapAt < 600) return;
+    animateZoomTo(t.scale * (e.shiftKey ? 0.5 : 2), e.clientX, e.clientY, 240);
+  });
   if(controls){
-    controls.zoomIn.onclick = function(){ t.scale = clampScale(t.scale+0.25); apply(); };
-    controls.zoomOut.onclick = function(){ t.scale = clampScale(t.scale-0.25); apply(); };
-    controls.reset.onclick = function(){ t.scale=1; t.x=0; t.y=0; apply(); };
+    controls.zoomIn.onclick = function(){ var c = centerClient(); animateZoomTo(t.scale * 1.4, c.x, c.y, 200); };
+    controls.zoomOut.onclick = function(){ var c = centerClient(); animateZoomTo(t.scale / 1.4, c.x, c.y, 200); };
+    controls.reset.onclick = function(){ cancelAnim(); t.scale=1; t.x=0; t.y=0; apply(); };
     if(controls.fullscreen){
       controls.fullscreen.onclick = function(){
         fsToggle(controls.shell, "fullscreen-active");
       };
     }
   }
-  return {apply:apply, t:t};
+  var api = {apply:apply, t:t, reset:function(){ cancelAnim(); t.scale=1; t.x=0; t.y=0; apply(); }};
+  viewport._panZoom = api;
+  return api;
 }
 
 function renderMapPins(){ renderPins($("#mapCanvas"), {editing:false}); renderMapConnections(); renderMapLegend(); }
