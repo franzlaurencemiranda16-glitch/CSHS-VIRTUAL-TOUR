@@ -2571,12 +2571,19 @@ function onPanoFiles(files){
     updateUploadPreview("lfPanoBox", pendingPano, "");
     var info = $("#lfPanoInfo");
     info.style.display = "block";
-    if(f.isPano){
-      info.textContent = "Panorama uploaded (" + f.width + "×" + f.height + " — 2:1 equirectangular ✓).";
-      info.style.color = "var(--green-700)";
-    } else {
-      info.textContent = "Uploaded image is " + f.width + "×" + f.height + " — this doesn't look like a 2:1 panorama, so the 360° view may look distorted.";
+    var msgs = [];
+    if(!f.isPano){
+      msgs.push("Uploaded image is " + f.width + "×" + f.height + " — this doesn't look like a 2:1 panorama, so the 360° view may look distorted.");
+    }
+    if(f.width < 4000){
+      msgs.push("It's also only " + f.width + "px wide, so the 360° view WILL look blurry. Re-upload the original full-resolution photo (4000px+ wide, ideally 6000px+).");
+    }
+    if(msgs.length){
+      info.textContent = msgs.join(" ");
       info.style.color = "var(--danger)";
+    } else {
+      info.textContent = "Panorama uploaded (" + f.width + "×" + f.height + " — 2:1 equirectangular ✓, full resolution preserved).";
+      info.style.color = "var(--green-700)";
     }
   }});
 }
@@ -2807,7 +2814,11 @@ function quickUploadPano(locId, files){
     if(!out.length) return;
     loc.panorama = out[0].url;
     saveLocations().then(function(){
-      toast(loc.name + ": 360\u00b0 image saved" + ((loc.hotspots||[]).length ? " (hotspots kept)" : ""));
+      var msg = loc.name + ": 360\u00b0 image saved" + ((loc.hotspots||[]).length ? " (hotspots kept)" : "");
+      if(out[0].width < 4000){
+        msg += " — WARNING: only " + out[0].width + "px wide, the 360\u00b0 view will look blurry. Upload the original full-resolution photo (4000px+).";
+      }
+      toast(msg);
       renderAdminSceneList();
     }).catch(function(err){ toast("Save failed: " + err.message); });
   }});
