@@ -334,7 +334,7 @@ a{color:inherit;}
 .tour-edit-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--green-900);color:#fff;border-radius:var(--radius-md);margin:16px 0;font-size:13px;}
 .tour-edit-bar .btn{padding:8px 16px;font-size:12px;}
 .tour-edit-active .tour-stage{cursor:crosshair;}
-.tour-edit-active .tour-stage::after{content:'Click in the panorama to place a hotspot';position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:40;white-space:nowrap;}
+.tour-edit-active .tour-stage::after{content:'Click the panorama to place a hotspot — press Esc to cancel';position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:40;white-space:nowrap;}
 
 /* ---------- About / footer ---------- */
 .about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;}
@@ -2252,12 +2252,8 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
     try { return STATE && STATE.isAdmin; } catch(e){ return false; }
   }
   function showEditBar(){
-    if(isAdmin() && scenesFromLocations().length > 0){
-      editBar.style.display = 'flex';
-    } else {
-      editBar.style.display = 'none';
-      if(editMode) setEditMode(false);
-    }
+    editBar.style.display = 'none';
+    if(editMode) setEditMode(false);
   }
   function setEditMode(on){
     if(on && !isAdmin()) on = false;
@@ -2280,6 +2276,9 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
   };
   editAddBtn.addEventListener('click', function(){ if(!isAdmin()){ showEditBar(); return; } setEditMode(!editMode); });
   editDoneBtn.addEventListener('click', function(){ setEditMode(false); });
+  document.addEventListener('keydown', function(e){
+    if((e.key === 'Escape' || e.keyCode === 27) && editMode) setEditMode(false);
+  });
   bindClickToPlace('panoViewer', function(){ return viewerInstance; }, function(e){
     if(!editMode || !isAdmin() || !viewerInstance) return;
     var loc = locById(STATE.currentSceneLocId);
