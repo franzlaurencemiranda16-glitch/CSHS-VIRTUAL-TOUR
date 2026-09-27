@@ -956,6 +956,11 @@ table.admintable tr:hover td{background:var(--paper-dim);}
     <!-- Virtual tour management -->
     <div class="admin-page" id="admin-tour">
       <div class="admin-topline"><div><h2>Virtual tour management</h2><p>Upload panoramas per location and connect them with hotspots.</p></div></div>
+      <div class="tour-edit-bar" id="adminTourEditBar">
+        <span>&#9998; Hotspot Edit Mode</span>
+        <button class="btn btn-green btn-sm" id="adminTourEditGo">+ Add by clicking panorama</button>
+        <span style="color:rgba(255,255,255,.65);font-size:12.5px;">Opens the tour &mdash; then click anywhere on the panorama to place a hotspot.</span>
+      </div>
       <div class="panel">
         <div class="panel-head"><h3>Scenes</h3></div>
         <p style="font-size:12.5px;color:var(--ink-500);margin:0 0 14px;">Every location with a 360&deg; panorama becomes a scene automatically. Click a card to manage hotspots, use <strong>Add/Replace 360&deg;</strong> to drop in a panorama (or drag &amp; drop a file onto the card), and <strong>Edit photos</strong> to change covers and gallery pictures.</p>
@@ -2239,6 +2244,7 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
 /* ---- Tour hotspot edit mode (admin): click the panorama to place a hotspot ---- */
 (function(){
   var editMode = false;
+  var pendingArm = false;
   var editBar = document.getElementById('tourEditBar');
   var editAddBtn = document.getElementById('tourEditAddBtn');
   var editDoneBtn = document.getElementById('tourEditDoneBtn');
@@ -2264,6 +2270,13 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
     origRenderTour();
     showEditBar();
     setEditMode(false);
+    if(pendingArm){
+      pendingArm = false;
+      if(isAdmin() && scenesFromLocations().length > 0){
+        setEditMode(true);
+        toast('Edit mode armed — click the panorama to place a hotspot');
+      }
+    }
   };
   editAddBtn.addEventListener('click', function(){ if(!isAdmin()){ showEditBar(); return; } setEditMode(!editMode); });
   editDoneBtn.addEventListener('click', function(){ setEditMode(false); });
@@ -2279,6 +2292,14 @@ $("#tourFullscreenBtn").addEventListener("click", function(e){
     toast('Position set — pick the target scene, then Add hotspot');
   });
   window._tourEditShowBar = showEditBar;
+  window._tourEditArm = function(){
+    if(!isAdmin()){ toast('Only the admin can edit hotspot points'); return; }
+    if(!scenesFromLocations().length){ toast('Add a location with a 360\u00b0 panorama first'); return; }
+    pendingArm = true;
+    goto('tour');
+  };
+  var adminTourGo = document.getElementById('adminTourEditGo');
+  if(adminTourGo) adminTourGo.addEventListener('click', function(){ window._tourEditArm(); });
 })();
 
 /* ============================================================
