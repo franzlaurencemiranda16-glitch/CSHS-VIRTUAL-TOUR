@@ -2,7 +2,8 @@
 <html lang="en">
 <head><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d24">
 <title>Cabiao Senior High School | Virtual Tour &amp; Campus Map</title>
 <meta name="description" content="Explore Cabiao Senior High School through an interactive campus map and immersive 360° virtual tour.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -331,10 +332,10 @@ a{color:inherit;}
 .pnlm-render-container .tooltip span{color:#fff!important;}
 
 /* Tour hotspot edit mode */
-.tour-edit-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--green-900);color:#fff;border-radius:var(--radius-md);margin:16px 0;font-size:13px;}
+.tour-edit-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--green-900);color:#fff;border-radius:var(--radius-md);margin:16px 0;font-size:13px;}
 .tour-edit-bar .btn{padding:8px 16px;font-size:12px;}
 .tour-edit-active .tour-stage{cursor:crosshair;}
-.tour-edit-active .tour-stage::after{content:'Click the panorama to place a hotspot — press Esc to cancel';position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:40;white-space:nowrap;}
+.tour-edit-active .tour-stage::after{content:'Click the panorama to place a hotspot — press Esc to cancel';position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:40;max-width:92%;white-space:normal;text-align:center;line-height:1.35;}
 
 /* ---------- About / footer ---------- */
 .about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;}
@@ -478,7 +479,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 .swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
 .swatch.selected{border-color:var(--ink-900);}
 .cred-line{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green-950);color:#fff;padding:12px 20px;border-radius:999px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);z-index:200;opacity:0;pointer-events:none;transition:.25s;display:flex;align-items:center;gap:8px;}
+.toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--green-950);color:#fff;padding:12px 20px;border-radius:999px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);z-index:200;opacity:0;pointer-events:none;transition:.25s;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 28px);white-space:normal;text-align:left;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast svg{width:16px;height:16px;color:var(--gold-500);}
 .confirm-backdrop{position:fixed;inset:0;background:rgba(20,21,24,.55);z-index:210;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -1480,6 +1481,40 @@ function toast(msg){
 window.toast = toast;
 window._narratorVoiceCfg = narratorVoiceCfg;
 window._spideyContent = function(){ return (STATE.content && STATE.content.spidey) || {}; };
+/* fullscreen helper — iPhone Safari has no Element.requestFullscreen, so fall back
+   to a fixed-position overlay that behaves like fullscreen */
+function fsResizeSoon(){ setTimeout(function(){ try{ window.dispatchEvent(new Event("resize")); }catch(e){} }, 80); }
+function fsExitFallback(){
+  $all(".fullscreen-fallback").forEach(function(el){ el.classList.remove("fullscreen-fallback"); });
+  document.body.classList.remove("fs-lock");
+  fsResizeSoon();
+}
+function fsEnterFallback(el){
+  fsExitFallback();
+  el.classList.add("fullscreen-fallback");
+  document.body.classList.add("fs-lock");
+  fsResizeSoon();
+}
+function fsToggle(el, activeClass){
+  if(document.fullscreenElement){
+    document.exitFullscreen && document.exitFullscreen();
+    if(activeClass) el.classList.remove(activeClass);
+    fsExitFallback();
+    return;
+  }
+  if(el.classList.contains("fullscreen-fallback")){ fsExitFallback(); return; }
+  if(el.requestFullscreen){ el.requestFullscreen(); if(activeClass) el.classList.add(activeClass); }
+  else fsEnterFallback(el);
+}
+document.addEventListener("fullscreenchange", function(){
+  if(!document.fullscreenElement){
+    $all(".fullscreen-active").forEach(function(el){ el.classList.remove("fullscreen-active"); });
+  }
+  fsResizeSoon();
+});
+document.addEventListener("keydown", function(e){
+  if((e.key === "Escape" || e.keyCode === 27) && document.querySelector(".fullscreen-fallback")) fsExitFallback();
+});
 function coverStyle(loc){
   if(loc.cover) return "background-image:url('"+loc.cover+"')";
   var c = catById(loc.categoryId);
@@ -1960,9 +1995,7 @@ function setupPanZoom(viewportId, canvasId, controls){
     controls.reset.onclick = function(){ t.scale=1; t.x=0; t.y=0; apply(); };
     if(controls.fullscreen){
       controls.fullscreen.onclick = function(){
-        var shell = controls.shell;
-        if(!document.fullscreenElement){ shell.requestFullscreen && shell.requestFullscreen(); shell.classList.add("fullscreen-active"); }
-        else { document.exitFullscreen && document.exitFullscreen(); shell.classList.remove("fullscreen-active"); }
+        fsToggle(controls.shell, "fullscreen-active");
       };
     }
   }
@@ -2269,9 +2302,7 @@ $("#tourNextBtn").addEventListener("click", function(e){
 });
 $("#tourFullscreenBtn").addEventListener("click", function(e){
   e.preventDefault(); e.stopPropagation();
-  var stage = $("#tourStage");
-  if(!document.fullscreenElement){ stage.requestFullscreen && stage.requestFullscreen(); stage.classList.add("fullscreen-active"); }
-  else { document.exitFullscreen && document.exitFullscreen(); stage.classList.remove("fullscreen-active"); }
+  fsToggle($("#tourStage"), "fullscreen-active");
 });
 
 /* ---- Tour hotspot edit mode (admin): click the panorama to place a hotspot ---- */
@@ -3683,8 +3714,69 @@ init();
 @keyframes spidey-talk{0%,100%{transform:scaleY(1) translateY(0)}25%{transform:scaleY(.97) translateY(2px)}50%{transform:scaleY(1.03) translateY(-1px)}75%{transform:scaleY(.97) translateY(2px)}}
 @media (max-width:640px){
   .spidey-avatar,.spidey-avatar .spidey-img{height:132px;max-width:132px;}
-  #spidey-narrator{bottom:14px;right:12px;gap:8px;}
+  #spidey-narrator{bottom:calc(14px + env(safe-area-inset-bottom));right:12px;gap:8px;}
   .spidey-bubble{max-width:236px;}
+}
+
+/* ---------- Responsive: phones & small tablets (all features) ---------- */
+.admin-login-wrap{min-height:calc(100vh - 58px);min-height:calc(100dvh - 58px);}
+.fullscreen-fallback{position:fixed !important;inset:0 !important;z-index:500 !important;border-radius:0 !important;box-shadow:none !important;margin:0 !important;}
+#tourStage.fullscreen-fallback{width:100vw;height:100vh;height:100dvh;aspect-ratio:auto;}
+.map-shell.fullscreen-fallback .map-viewport{height:100%;aspect-ratio:auto;}
+body.fs-lock{overflow:hidden;}
+@media (max-width:760px){
+  .wrap{padding:0 16px;}
+  .topbar-inner{padding:10px 14px;gap:8px;}
+  .header-search{margin-left:0;}
+  .header-search-box{position:fixed;top:64px;left:12px;right:12px;width:auto;max-height:60vh;}
+  .header-search-results{max-height:46vh;}
+  .section{padding:52px 0;}
+  .section-tight{padding:34px 0;}
+  .hero{padding-top:74px;}
+  .hero-inner{padding-bottom:56px;}
+  .hero p.lede{font-size:15.5px;margin:16px auto 26px;}
+  .stats-grid{padding:22px 16px;}
+  .admin-main{padding:18px 14px 70px;}
+  .admin-topline h2{font-size:20px;}
+  .admin-side{padding:10px;}
+  .admin-side nav button{padding:10px 11px;font-size:12.5px;}
+  .admin-cards{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;}
+  .admin-card b{font-size:23px;}
+  .panel{padding:16px 14px;}
+  .modal-content{padding:20px 18px 24px;}
+  .modal-hero{height:150px;}
+  .tour-loc-title h3{font-size:15px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .icon-btn{width:44px;height:44px;}
+  .icon-btn svg{width:20px;height:20px;}
+  .map-viewport{aspect-ratio:4/3;}
+  .map-hint,.you-here{font-size:10.5px;padding:6px 10px;}
+  table.admintable{display:block;overflow-x:auto;white-space:nowrap;}
+  .toast{font-size:12.5px;padding:11px 16px;}
+  .field input,.field select,.field textarea,.search-box input,.header-search-box input,.gm-caption{font-size:16px;}
+  .scene-card{width:132px;}
+  .lp-content h3{font-size:21px;}
+  .lp-actions .btn{min-width:130px;}
+  .loc-panel-body{padding-bottom:calc(30px + env(safe-area-inset-bottom));}
+  .speak-modal{padding:110px 14px 24px;align-items:flex-start;overflow-y:auto;}
+  .admin-login-card{max-width:100%;}
+}
+@media (max-width:760px) and (orientation:portrait){
+  .tour-stage{aspect-ratio:1/1;}
+}
+@media (max-width:400px){
+  .brand-text strong{font-size:13px;}
+  .brand img{width:36px;height:36px;}
+  .brand-text .eyebrow{font-size:9px;}
+  .stats-grid{padding:18px 8px;gap:4px;}
+  .stat span{font-size:10px;}
+  .btn{padding:14px 20px;font-size:14px;}
+  .scene-card{width:118px;}
+  .speak-modal-card{padding:96px 18px 20px;}
+  .speak-modal-spidey{width:110px;top:-76px;}
+  .admin-side nav button{padding:9px 9px;font-size:12px;}
+}
+@media (hover:none){
+  .gm-actions{opacity:1;}
 }
 </style>
 
