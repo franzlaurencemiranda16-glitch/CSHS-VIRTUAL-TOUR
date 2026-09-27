@@ -2074,6 +2074,27 @@ var viewerInstance = null;
 function scenesFromLocations(){
   return STATE.locations.filter(function(l){ return l.panorama && l.status!=="draft"; });
 }
+function panoDimsFor(loc){ return (loc && loc.panoW > 0 && loc.panoH > 0) ? { w: Number(loc.panoW), h: Number(loc.panoH) } : null; }
+function panoPartialParams(loc){
+  var d = panoDimsFor(loc);
+  if(!d) return null;
+  var ratio = d.w / d.h;
+  if(ratio < 2.6 || ratio > 15) return null;
+  var haov = Math.max(40, Math.min(360, Number(loc.panoHAOV) || 180));
+  var vaov = Math.min(180, haov * d.h / d.w);
+  if(vaov < 8) return null;
+  return { haov: haov, vaov: vaov, hfov: 70,
+    minYaw: -haov/2, maxYaw: haov/2,
+    minPitch: -vaov/2, maxPitch: vaov/2 };
+}
+function clampHotspotToPano(h, pp){
+  if(!pp) return h;
+  var c = Object.assign({}, h);
+  var yPad = Math.min(40, pp.haov/2 - 10);
+  c.yaw = Math.max(pp.minYaw + yPad, Math.min(pp.maxYaw - yPad, Number(c.yaw) || 0));
+  c.pitch = Math.max(pp.minPitch + 3, Math.min(pp.maxPitch - 3, Number(c.pitch) || 0));
+  return c;
+}
 /* click an arrow -> turn toward it, then fade into the next location */
 var navTurning = false;
 function turnAndGo(fromId, targetId, pitch, yaw){
@@ -2130,12 +2151,24 @@ function buildPannellumConfig(){
       var yaw = Math.atan2(dx, -dy) * (180/Math.PI);
       hot.push(navArrow(-18, yaw, loc.id, other));
     });
+    var pp = panoPartialParams(loc);
+    var spots = pp ? hot.map(function(h){ return clampHotspotToPano(h, pp); }) : hot;
     scenes[loc.id] = {
       title: loc.name,
       type: "equirectangular",
       panorama: loc.panorama,
-      hotSpots: hot
+      hotSpots: spots
     };
+    if(pp){
+      scenes[loc.id].haov = pp.haov;
+      scenes[loc.id].vaov = pp.vaov;
+      scenes[loc.id].hfov = pp.hfov;
+      scenes[loc.id].minYaw = pp.minYaw;
+      scenes[loc.id].maxYaw = pp.maxYaw;
+      scenes[loc.id].minPitch = pp.minPitch;
+      scenes[loc.id].maxPitch = pp.maxPitch;
+      scenes[loc.id].avoidShowingBackground = true;
+    }
   });
   return scenes;
 }
@@ -2446,7 +2479,7 @@ function populateCategorySelect(){
   $("#lfCategory").innerHTML = STATE.categories.map(function(c){ return '<option value="'+c.id+'">'+c.icon+' '+esc(c.name)+'</option>'; }).join("");
 }
 var editingLocId = null;
-var pendingCover = "", pendingPano = "", pendingGallery = [];
+var pendingCover = "", pendingPano = "", pendingPanoW = 0, pendingPanoH = 0, pendingGallery = [];
 
 function renderGalleryList(){
   var list = $("#lfGalleryList");
@@ -2518,6 +2551,8 @@ function openLocForm(locId){
   STATE.pendingLocMapPos = null;
   pendingCover = loc ? (loc.cover||"") : "";
   pendingPano = loc ? (loc.panorama||"") : "";
+  pendingPanoW = loc && loc.panoW > 0 ? loc.panoW : 0;
+  pendingPanoH = loc && loc.panoH > 0 ? loc.panoH : 0;
   pendingGallery = (loc && loc.images ? loc.images : []).map(function(im){
     return typeof im === "string" ? {url:im, caption:""} : {url:im.url, caption:im.caption||""};
   });
@@ -2528,7 +2563,13 @@ function openLocForm(locId){
   else coverWrap.style.display = "none";
   var panoInfo = $("#lfPanoInfo");
   panoInfo.style.display = pendingPano ? "block" : "none";
-  panoInfo.textContent = pendingPano ? "Current panorama: " + (pendingPano.indexOf("data:") === 0 ? "embedded image (re-upload to store on server)" : pendingPano) : "";
+  if(pendingPano){
+    var pnote = pendingPano.indexOf("data:") === 0 ? "embedded image (re-upload to store on server)" : pendingPano;
+    if(pendingPanoW > 0 && pendingPanoH > 0 && pendingPanoW / pendingPanoH >= 2.6){
+      pnote += " \u2014 phone panorama strip (" + pendingPanoW + "\u00d7" + pendingPanoH + "), displayed as a ~180\u00b0 partial 360\u00b0 view";
+    }
+    panoInfo.textContent = "Current panorama: " + pnote;
+  } else panoInfo.textContent = "";
   renderGalleryList();
   $("#locFormBackdrop").classList.remove("hidden");
 }
@@ -2568,11 +2609,15 @@ function onPanoFiles(files){
   handleImageFiles(files, { kind: "panorama", done: function(files){
     var f = files[0];
     pendingPano = f.url;
+    pendingPanoW = f.width || 0;
+    pendingPanoH = f.height || 0;
     updateUploadPreview("lfPanoBox", pendingPano, "");
     var info = $("#lfPanoInfo");
     info.style.display = "block";
     var msgs = [];
-    if(!f.isPano){
+    if(f.width / Math.max(1, f.height) >= 2.6){
+      msgs.push("Phone panorama strip (" + f.width + "×" + f.height + ") detected — it will display as a ~180° partial 360° view at correct proportions (no stretching). Tip: use Google Photo Sphere / Street View app to capture a true full-sphere 360°.");
+    } else if(!f.isPano){
       msgs.push("Uploaded image is " + f.width + "×" + f.height + " — this doesn't look like a 2:1 panorama, so the 360° view may look distorted.");
     }
     if(f.width < 4000){
@@ -2652,6 +2697,8 @@ $("#locForm").addEventListener("submit", async function(e){
     cover: pendingCover,
     images: pendingGallery.slice(),
     panorama: pendingPano,
+    panoW: pendingPanoW,
+    panoH: pendingPanoH,
     video: $("#lfVideo").value.trim(),
     contact: $("#lfContact").value.trim(),
     hours: $("#lfHours").value.trim(),
@@ -2813,6 +2860,8 @@ function quickUploadPano(locId, files){
   handleImageFiles(files, { kind: "panorama", done: function(out){
     if(!out.length) return;
     loc.panorama = out[0].url;
+    loc.panoW = out[0].width || 0;
+    loc.panoH = out[0].height || 0;
     saveLocations().then(function(){
       var msg = loc.name + ": 360\u00b0 image saved" + ((loc.hotspots||[]).length ? " (hotspots kept)" : "");
       if(out[0].width < 4000){
@@ -2934,10 +2983,17 @@ function openHotspotManager(locId, preset){
   setTimeout(function(){
     if(hsViewer){ try{hsViewer.destroy();}catch(e){} hsViewer = null; }
     hsLoaded = false;
-    hsViewer = window.pannellum.viewer("hsPreviewPano", {
-      panorama: loc.panorama, autoLoad:true, type:"equirectangular",
-      hotSpots: hsPreviewHotspots(loc)
-    });
+    var pp = panoPartialParams(loc);
+    var previewSpots = hsPreviewHotspots(loc);
+    if(pp) previewSpots = previewSpots.map(function(h){ return clampHotspotToPano(h, pp); });
+    var hsCfg = { panorama: loc.panorama, autoLoad:true, type:"equirectangular", hotSpots: previewSpots };
+    if(pp){
+      hsCfg.haov = pp.haov; hsCfg.vaov = pp.vaov; hsCfg.hfov = pp.hfov;
+      hsCfg.minYaw = pp.minYaw; hsCfg.maxYaw = pp.maxYaw;
+      hsCfg.minPitch = pp.minPitch; hsCfg.maxPitch = pp.maxPitch;
+      hsCfg.avoidShowingBackground = true;
+    }
+    hsViewer = window.pannellum.viewer("hsPreviewPano", hsCfg);
     hsViewer.on("load", function(){
       hsLoaded = true;
       var pd = hsPendingDraft; hsPendingDraft = null;
