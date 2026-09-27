@@ -3393,6 +3393,7 @@ init();
   var spokenOnce = false;
   var voiceBtn = null;
   var SPEAK_MODE_KEY = 'cshs-speaking-mode-2';
+  var speakConfirmed = false;
 
   function getSpeakingMode(){ try{ return localStorage.getItem(SPEAK_MODE_KEY); }catch(e){ return null; } }
   function setSpeakingMode(v){ try{ v ? localStorage.setItem(SPEAK_MODE_KEY, v) : localStorage.removeItem(SPEAK_MODE_KEY); }catch(e){} }
@@ -3414,6 +3415,7 @@ init();
     var yes = document.getElementById('speakModeYes');
     var no = document.getElementById('speakModeNo');
     if(yes) yes.onclick = function(){
+      speakConfirmed = true;
       setSpeakingMode('on'); hideSpeakModePrompt(); refreshVoiceBtn();
       toast('Speaking mode on');
       speakGreeting();
@@ -3422,11 +3424,7 @@ init();
       setSpeakingMode('off'); hideSpeakModePrompt(); refreshVoiceBtn();
       toast('Speaking mode off — tap the speaker icon anytime to turn it on');
     };
-    var pref = getSpeakingMode();
     setTimeout(function(){ showSpeakModePrompt(); }, 700);
-    if(pref === 'on'){
-      setTimeout(function(){ if(getSpeakingMode() === 'on') speakGreeting(); }, 900);
-    }
     refreshVoiceBtn();
   }
 
@@ -3452,10 +3450,11 @@ init();
     avatarEl = document.getElementById('spideyAvatar');
 
     document.getElementById('spideyClose').onclick = function(){ hide(); };
-    document.getElementById('spideySpeakBtn').onclick = function(){ speak(textEl.textContent, true); };
+    document.getElementById('spideySpeakBtn').onclick = function(){ speakConfirmed = true; speak(textEl.textContent, true); };
     voiceBtn = document.getElementById('spideyVoiceToggle');
     if(voiceBtn) voiceBtn.onclick = function(){
       if(getSpeakingMode() === 'off'){
+        speakConfirmed = true;
         setSpeakingMode('on'); refreshVoiceBtn(); toast('Speaking mode on'); speak(textEl.textContent, true);
       } else {
         setSpeakingMode('off'); stop(); refreshVoiceBtn(); toast('Speaking mode off');
@@ -3520,6 +3519,7 @@ init();
     stop();
     setText(text);
     show();
+    if(!speakConfirmed) return;
     if(!force && getSpeakingMode() === 'off'){
       if(!mutedHintShown){
         mutedHintShown = true;
