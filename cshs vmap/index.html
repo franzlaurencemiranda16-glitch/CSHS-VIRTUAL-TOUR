@@ -255,7 +255,7 @@ a{color:inherit;}
 .tour-stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
 .tour-stage.fullscreen-active{border-radius:0;}
 .tour-transition{position:absolute;inset:0;z-index:150;pointer-events:none;opacity:0;visibility:hidden;}
-.tour-transition.playing,.tour-transition.leaving{opacity:1;visibility:visible;pointer-events:auto;}
+.tour-transition.playing,.tour-transition.leaving{opacity:1;visibility:visible;pointer-events:none;}
 .tt-panel{position:absolute;top:-15%;height:130%;width:64%;}
 .tt-a{left:0;background:#0b0b0c;transform:translateX(-112%) skewX(-9deg);}
 .tt-b{right:0;background:var(--red-600);transform:translateX(112%) skewX(-9deg);}
@@ -1161,7 +1161,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <div class="field"><label>Map X position (%)</label><input id="lfMapX" type="number" min="0" max="100" step="0.1"></div>
           <div class="field"><label>Map Y position (%)</label><input id="lfMapY" type="number" min="0" max="100" step="0.1"></div>
         </div>
-        <div class="field-hint" style="margin:6px 0 16px;">Map position is also set by clicking "Add point" on the campus map, or by dragging the marker when Move mode is on.</div>
+        <div class="field-hint" style="margin:6px 0 16px;">Tip: on the map editor, <strong>click a marker</strong> to edit its place and details, or <strong>drag it</strong> to move. "Add point" places brand-new markers anywhere on the map.</div>
         <div style="display:flex;gap:10px;">
           <button type="submit" class="btn btn-green">Save location</button>
           <button type="button" class="btn btn-ghost" id="locFormCancel">Cancel</button>
@@ -1753,7 +1753,9 @@ function openLocationPanel(locId){
   panelGallery = locGalleryImages(loc);
   var hero = panelGallery.length
     ? '<img src="'+esc(panelGallery[0].url)+'" alt="'+esc(loc.name)+'">'
-    : '<div class="lp-noimg">No photo yet for this location</div>';
+    : (loc.panorama
+        ? '<img src="'+esc(loc.panorama)+'" alt="'+esc(loc.name)+'">'
+        : '<div class="lp-noimg">No photo yet for this location</div>');
 
   var meta = "";
   if(loc.hours) meta += '<div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>'+esc(loc.hours)+'</span></div>';
@@ -1883,33 +1885,41 @@ function renderPins(canvasEl, opts){
     pin.setAttribute("data-loc-id", loc.id);
     pin.innerHTML = pinDot(cat) + '<div class="pin-label">'+esc(loc.name)+'</div>';
     canvasEl.appendChild(pin);
-    if(opts.editing && STATE.adminMapMode==="move"){
+    if(opts.editing){
       makeDraggable(pin, canvasEl, loc);
+      pin.addEventListener("click", function(e){
+        e.stopPropagation();
+        if(pin._suppressClick){ pin._suppressClick = false; return; }
+        openLocForm(loc.id);
+      });
     } else {
       pin.addEventListener("click", function(e){
         e.stopPropagation();
-        if(opts.editing){ openLocForm(loc.id); }
-        else {
-          var wasActive = pin.classList.contains("active");
-          $all(".pin.active", canvasEl).forEach(function(p){ p.classList.remove("active"); });
-          if(wasActive){
-            closeLocationPanel();
-          } else {
-            pin.classList.add("active");
-            openLocationPanel(loc.id);
-          }
+        var wasActive = pin.classList.contains("active");
+        $all(".pin.active", canvasEl).forEach(function(p){ p.classList.remove("active"); });
+        if(wasActive){
+          closeLocationPanel();
+        } else {
+          pin.classList.add("active");
+          openLocationPanel(loc.id);
         }
       });
     }
   });
 }
 function makeDraggable(pin, canvasEl, loc){
-  var dragging=false;
+  var dragging=false, moved=false, sx=0, sy=0;
   pin.addEventListener("pointerdown", function(e){
-    dragging=true; pin.setPointerCapture(e.pointerId); e.stopPropagation();
+    dragging=true; moved=false; sx=e.clientX; sy=e.clientY; pin._suppressClick=false;
+    try{ pin.setPointerCapture(e.pointerId); }catch(err){}
+    e.stopPropagation();
   });
   pin.addEventListener("pointermove", function(e){
     if(!dragging) return;
+    if(!moved){
+      if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy) < 5) return;
+      moved=true;
+    }
     var rect = canvasEl.getBoundingClientRect();
     var x = ((e.clientX-rect.left)/rect.width)*100;
     var y = ((e.clientY-rect.top)/rect.height)*100;
@@ -1919,13 +1929,17 @@ function makeDraggable(pin, canvasEl, loc){
   });
   pin.addEventListener("pointerup", function(e){
     dragging=false;
-    if(loc._tmpX!=null){
+    if(moved && loc._tmpX!=null){
+      pin._suppressClick = true;
       loc.mapX = Math.round(loc._tmpX*10)/10; loc.mapY = Math.round(loc._tmpY*10)/10;
       delete loc._tmpX; delete loc._tmpY;
       saveLocations().then(function(){ toast("Marker moved"); }).catch(function(err){ toast("Save failed: " + err.message); });
       renderAdminLocTable();
+    } else {
+      delete loc._tmpX; delete loc._tmpY;
     }
   });
+  pin.addEventListener("pointercancel", function(){ dragging=false; delete loc._tmpX; delete loc._tmpY; });
 }
 
 function focusMarker(locId){
@@ -2348,10 +2362,17 @@ function renderTourPage(){
   var startId = STATE.currentSceneLocId && locById(STATE.currentSceneLocId) ? STATE.currentSceneLocId : scenes[0].id;
   var config = buildPannellumConfig();
   if(viewerInstance){ try{ viewerInstance.destroy(); }catch(e){} }
-  viewerInstance = window.pannellum.viewer("panoViewer", {
-    "default": {"firstScene": startId, "sceneFadeDuration": 600, "autoLoad": true},
-    "scenes": config
-  });
+  try{
+    viewerInstance = window.pannellum.viewer("panoViewer", {
+      "default": {"firstScene": startId, "sceneFadeDuration": 600, "autoLoad": true},
+      "scenes": config
+    });
+  }catch(err){
+    viewerInstance = null;
+    $("#panoViewer").innerHTML = '<p class="no-scenes">The 360&deg; viewer could not start (' + esc(String(err && err.message || err)) + '). <button class="btn btn-ghost btn-sm" onclick="location.reload()" style="margin-left:8px;">Reload page</button></p>';
+    $("#tourSceneTitle").textContent = "Viewer unavailable";
+    return;
+  }
   viewerInstance.on("scenechange", function(sceneId){
     STATE.currentSceneLocId = sceneId;
     var loc = locById(sceneId);
