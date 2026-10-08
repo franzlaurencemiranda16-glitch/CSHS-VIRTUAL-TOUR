@@ -3,7 +3,7 @@
 <head><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0a1710">
+  <meta name="theme-color" content="#0d2c1b">
 <title>Cabiao Senior High School | Virtual Tour &amp; Campus Map</title>
 <meta name="description" content="Explore Cabiao Senior High School through an interactive campus map and immersive 360° virtual tour.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,15 +13,15 @@
 <style>
 :root{
   /* CSHS identity: green / gold / black / white (UST style) */
-  --red-700:#0b5128;
-  --red-600:#0e6b34;
-  --red-500:#12803f;
-  --red-300:#5cc98b;
-  --red-100:#e6f6ec;
-  --red-50:#f2fbf5;
-  --black-950:#0a1710;
-  --black-900:#0e2117;
-  --black-800:#153024;
+  --red-700:#0d6e35;
+  --red-600:#118a43;
+  --red-500:#16a552;
+  --red-300:#66d996;
+  --red-100:#e9f9ee;
+  --red-50:#f4fcf6;
+  --black-950:#0d2c1b;
+  --black-900:#113a24;
+  --black-800:#175033;
   /* legacy aliases - components below still reference --green-* / --gold-* */
   --green-950:var(--black-950);
   --green-900:var(--black-900);
@@ -29,11 +29,11 @@
   --green-700:var(--red-700);
   --green-600:var(--red-600);
   --green-500:var(--red-500);
-  --green-200:#dfeee5;
+  --green-200:#e3f3e9;
   --green-50:var(--red-50);
-  --gold-600:#8f6f10;
-  --gold-500:#c69a1b;
-  --gold-300:#f3d06a;
+  --gold-600:#9c7a10;
+  --gold-500:#d3a51d;
+  --gold-300:#f7d878;
   --paper:#f7f7f8;
   --paper-dim:#eef0f2;
   --card:#ffffff;
@@ -78,11 +78,11 @@ a{color:inherit;}
   background-size:34px 22px;
 }
 .gear-divider.on-dark{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='22' viewBox='0 0 34 22'%3E%3Cpath d='M0 0 L17 22 L34 0 Z' fill='%23f6f8f6'/%3E%3C/svg%3E");}
-.gear-divider.on-light{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='22' viewBox='0 0 34 22'%3E%3Cpath d='M0 0 L17 22 L34 0 Z' fill='%230a1710'/%3E%3C/svg%3E");}
+.gear-divider.on-light{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='22' viewBox='0 0 34 22'%3E%3Cpath d='M0 0 L17 22 L34 0 Z' fill='%230d2c1b'/%3E%3C/svg%3E");}
 .gear-divider.flip{transform:rotate(180deg);}
 
 /* ---------- Top bar / nav ---------- */
-.topbar{position:sticky;top:0;z-index:60;background:rgba(10,23,16,.97);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.08);}
+.topbar{position:sticky;top:0;z-index:60;background:rgba(13,44,27,.97);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.08);}
 .topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;max-width:1240px;margin:0 auto;gap:16px;}
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff;min-width:0;}
 .brand img{width:42px;height:42px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.5);}
@@ -125,10 +125,10 @@ a{color:inherit;}
 /* ---------- Hero ---------- */
 .hero{position:relative;background:var(--green-950);color:#fff;overflow:hidden;padding:96px 0 0;}
 .hero-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center top;background-repeat:no-repeat;opacity:.6;}
-.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,23,16,.3) 0%,rgba(10,23,16,.6) 55%,rgba(10,23,16,.97) 100%);}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,44,27,.3) 0%,rgba(13,44,27,.6) 55%,rgba(13,44,27,.97) 100%);}
 .hero-inner{position:relative;z-index:2;max-width:760px;margin:0 auto;text-align:center;padding:0 24px 84px;animation:heroFadeIn 1s ease-out;}
 @keyframes heroFadeIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(243,208,106,.45);background:rgba(198,154,27,.15);color:var(--gold-300);padding:7px 16px;border-radius:999px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-bottom:26px;animation:heroFadeIn 1s ease-out .2s both;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(247,216,120,.45);background:rgba(211,165,29,.15);color:var(--gold-300);padding:7px 16px;border-radius:999px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-bottom:26px;animation:heroFadeIn 1s ease-out .2s both;}
 .hero h1{font-family:var(--font-display);font-weight:700;font-size:clamp(34px,6.4vw,58px);line-height:1.03;margin:0 0 6px;letter-spacing:-.01em;animation:heroFadeIn 1s ease-out .3s both;}
 .hero h1 .accent{color:var(--gold-500);display:block;background:linear-gradient(90deg,var(--gold-500),var(--gold-300),var(--gold-500));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:heroShimmer 4s linear infinite;}
 @keyframes heroShimmer{0%{background-position:0% center;}100%{background-position:200% center;}}
@@ -139,8 +139,8 @@ a{color:inherit;}
 .hero-ctas .btn:hover::after{left:100%;}
 .btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:15px;padding:15px 26px;border-radius:999px;border:none;transition:.18s transform,.18s box-shadow,.18s background;text-decoration:none;}
 .btn:active{transform:translateY(1px);}
-.btn-gold{background:var(--gold-500);color:#fff;box-shadow:0 10px 24px -8px rgba(143,111,16,.55);}
-.btn-gold:hover{background:var(--gold-600);box-shadow:0 14px 28px -8px rgba(143,111,16,.65);}
+.btn-gold{background:var(--gold-500);color:#fff;box-shadow:0 10px 24px -8px rgba(156,122,16,.55);}
+.btn-gold:hover{background:var(--gold-600);box-shadow:0 14px 28px -8px rgba(156,122,16,.65);}
 .btn-outline-light{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.55);}
 .btn-outline-light:hover{background:rgba(255,255,255,.1);border-color:#fff;}
 .btn-green{background:var(--green-700);color:#fff;}
@@ -179,7 +179,7 @@ a{color:inherit;}
 .loc-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;text-align:left;box-shadow:var(--shadow-sm);transition:.18s transform,.18s box-shadow;cursor:pointer;display:flex;flex-direction:column;}
 .loc-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
 .loc-thumb{height:130px;position:relative;background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:10px;}
-.loc-thumb .cat-pill{background:rgba(10,23,16,.78);color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;}
+.loc-thumb .cat-pill{background:rgba(13,44,27,.78);color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;}
 .loc-body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column;gap:6px;}
 .loc-body h3{font-family:var(--font-display);font-size:16.5px;margin:0;}
 .loc-body p{font-size:13px;color:var(--ink-500);margin:0;line-height:1.5;flex:1;}
@@ -209,7 +209,7 @@ a{color:inherit;}
 .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;filter:drop-shadow(0 3px 5px rgba(0,0,0,.35));z-index:5;}
 .pin .dot{width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;transition:transform .2s,box-shadow .2s;}
 .pin .dot span{transform:rotate(45deg);font-size:15px;}
-.pin:hover .dot{transform:rotate(-45deg) scale(1.15);box-shadow:0 0 0 6px rgba(198,154,27,.35);}
+.pin:hover .dot{transform:rotate(-45deg) scale(1.15);box-shadow:0 0 0 6px rgba(211,165,29,.35);}
 .pin::after{content:'';position:absolute;top:-8px;left:-8px;right:-8px;bottom:-8px;border-radius:50%;z-index:-1;}
 .pin-label{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--green-900);color:#fff;font-size:11px;font-weight:600;padding:5px 12px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:.2s;box-shadow:var(--shadow-md);}
 .pin:hover .pin-label{opacity:1;transform:translateX(-50%) translateY(-3px);}
@@ -255,7 +255,7 @@ a{color:inherit;}
 .tour-stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
 .tour-stage.fullscreen-active{border-radius:0;}
 .tour-transition{position:absolute;inset:0;z-index:150;pointer-events:none;opacity:0;visibility:hidden;}
-.tour-transition.playing,.tour-transition.leaving{opacity:1;visibility:visible;pointer-events:none;}
+.tour-transition.playing,.tour-transition.leaving{opacity:1;visibility:visible;pointer-events:auto;}
 .tt-panel{position:absolute;top:-15%;height:130%;width:64%;}
 .tt-a{left:0;background:#0b0b0c;transform:translateX(-112%) skewX(-9deg);}
 .tt-b{right:0;background:var(--red-600);transform:translateX(112%) skewX(-9deg);}
@@ -293,7 +293,7 @@ a{color:inherit;}
 .icon-btn svg{width:18px;height:18px;pointer-events:none;}
 .scene-strip{display:flex;gap:10px;overflow-x:auto;padding:16px 2px 4px;margin-top:16px;}
 .scene-card{flex:0 0 auto;width:150px;background:#fff;border:1.5px solid var(--line);border-radius:var(--radius-md);overflow:hidden;cursor:pointer;transition:.15s;}
-.scene-card.active{border-color:var(--green-600);box-shadow:0 0 0 3px rgba(14,107,52,.2);}
+.scene-card.active{border-color:var(--green-600);box-shadow:0 0 0 3px rgba(17,138,67,.2);}
 .scene-card .th{height:80px;background-size:cover;background-position:center;}
 .scene-card .lb{padding:8px 10px;font-size:12px;font-weight:600;}
 .no-scenes{text-align:center;padding:60px 20px;color:var(--ink-500);}
@@ -344,7 +344,7 @@ a{color:inherit;}
 
 /* ---------- About / footer ---------- */
 /* UST-style info popup when an info hotspot is clicked */
-.hs-info-pop{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(16px);max-width:min(440px,92vw);background:rgba(10,23,16,.95);color:#fff;border:1px solid rgba(243,208,106,.4);border-radius:14px;padding:16px 44px 16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.4);z-index:900;opacity:0;pointer-events:none;transition:.28s opacity,.28s transform;}
+.hs-info-pop{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(16px);max-width:min(440px,92vw);background:rgba(13,44,27,.95);color:#fff;border:1px solid rgba(247,216,120,.4);border-radius:14px;padding:16px 44px 16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.4);z-index:900;opacity:0;pointer-events:none;transition:.28s opacity,.28s transform;}
 .hs-info-pop.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
 .hs-info-pop b{display:block;font-family:var(--font-display);color:var(--gold-300);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
 .hs-info-pop p{margin:0;font-size:14px;line-height:1.55;}
@@ -378,7 +378,7 @@ footer ul button:hover{color:var(--gold-300);}
 /* ---------- Admin login: split layout (branding left / form right) ---------- */
 .admin-login-wrap{min-height:calc(100vh - 58px);display:flex;align-items:stretch;padding:0;background:var(--black-950);position:relative;overflow:hidden;}
 .admin-login-wrap .decor-circle{display:none;}
-.login-brand{flex:1.15;position:relative;display:flex;flex-direction:column;justify-content:center;padding:56px 60px;color:#fff;border-right:1px solid rgba(255,255,255,.08);background:radial-gradient(720px 420px at 18% 12%,rgba(198,154,27,.35),transparent 62%),linear-gradient(165deg,var(--black-900) 0%,var(--black-950) 100%);overflow:hidden;}
+.login-brand{flex:1.15;position:relative;display:flex;flex-direction:column;justify-content:center;padding:56px 60px;color:#fff;border-right:1px solid rgba(255,255,255,.08);background:radial-gradient(720px 420px at 18% 12%,rgba(211,165,29,.35),transparent 62%),linear-gradient(165deg,var(--black-900) 0%,var(--black-950) 100%);overflow:hidden;}
 .login-brand::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(closest-side at 38% 50%,#000,transparent);mask-image:radial-gradient(closest-side at 38% 50%,#000,transparent);pointer-events:none;}
 .login-brand .lb-inner{position:relative;z-index:1;}
 .login-brand .lb-seal{width:104px;height:104px;border-radius:26px;object-fit:contain;background:#fff;padding:12px;box-shadow:0 20px 44px rgba(0,0,0,.45);margin-bottom:28px;animation:cardSlideUp .55s ease-out both;}
@@ -419,9 +419,9 @@ footer ul button:hover{color:var(--gold-300);}
 .field{margin-bottom:16px;}
 .field label{display:block;font-size:13px;font-weight:600;color:var(--ink-700);margin-bottom:5px;}
 .field input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:#f8faf8;font-size:14px;transition:border-color .2s,box-shadow .2s;box-sizing:border-box;}
-.field input:focus{outline:none;border-color:var(--green-600);box-shadow:0 0 0 3px rgba(14,107,52,.14);}
+.field input:focus{outline:none;border-color:var(--green-600);box-shadow:0 0 0 3px rgba(17,138,67,.14);}
 .admin-login-card .btn{transition:transform .2s,box-shadow .2s;}
-.admin-login-card .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,107,52,.3);}
+.admin-login-card .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(17,138,67,.3);}
 .admin-login-card .btn:active{transform:translateY(2px);}
 .field{margin-bottom:16px;}
 .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink-700);}
@@ -575,7 +575,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 .gallery-manage{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px;margin-top:12px;}
 .gm-cell{display:flex;flex-direction:column;gap:5px;}
 .gm-item{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--line);aspect-ratio:4/3;background:var(--paper-dim);}
-.gm-item.featured{border-color:var(--red-600);box-shadow:0 0 0 2px rgba(14,107,52,.2);}
+.gm-item.featured{border-color:var(--red-600);box-shadow:0 0 0 2px rgba(17,138,67,.2);}
 .gm-item img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;}
 .gm-badge{position:absolute;top:5px;left:5px;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:var(--red-600);color:#fff;padding:3px 7px;border-radius:999px;}
 .gm-actions{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;gap:4px;padding:6px;background:linear-gradient(transparent,rgba(10,10,12,.82));opacity:0;transition:opacity .2s;}
@@ -1161,7 +1161,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <div class="field"><label>Map X position (%)</label><input id="lfMapX" type="number" min="0" max="100" step="0.1"></div>
           <div class="field"><label>Map Y position (%)</label><input id="lfMapY" type="number" min="0" max="100" step="0.1"></div>
         </div>
-        <div class="field-hint" style="margin:6px 0 16px;">Tip: on the map editor, <strong>click a marker</strong> to edit its place and details, or <strong>drag it</strong> to move. "Add point" places brand-new markers anywhere on the map.</div>
+        <div class="field-hint" style="margin:6px 0 16px;">Map position is also set by clicking "Add point" on the campus map, or by dragging the marker when Move mode is on.</div>
         <div style="display:flex;gap:10px;">
           <button type="submit" class="btn btn-green">Save location</button>
           <button type="button" class="btn btn-ghost" id="locFormCancel">Cancel</button>
@@ -1286,11 +1286,11 @@ table.admintable tr:hover td{background:var(--paper-dim);}
    DEMO / SEED DATA — clearly flagged, safe for the admin to delete
    ============================================================ */
 var DEFAULT_CATEGORIES = [
-  {id:"cat-academic", name:"Academic", color:"#0e6b34", icon:"📚", group:"facilities"},
+  {id:"cat-academic", name:"Academic", color:"#118a43", icon:"📚", group:"facilities"},
   {id:"cat-admin", name:"Administration", color:"#1a1d21", icon:"🏛️", group:"offices"},
   {id:"cat-lab", name:"Laboratory", color:"#b3331f", icon:"🔬", group:"laboratories"},
   {id:"cat-student", name:"Student Services", color:"#5b6e63", icon:"🎓", group:"offices"},
-  {id:"cat-sports", name:"Sports", color:"#12803f", icon:"🏐", group:"facilities"},
+  {id:"cat-sports", name:"Sports", color:"#16a552", icon:"🏐", group:"facilities"},
   {id:"cat-facilities", name:"Facilities", color:"#44474d", icon:"🏫", group:"facilities"},
   {id:"cat-entrance", name:"Entrance", color:"#2b2f36", icon:"🚪", group:"facilities"},
   {id:"cat-safety", name:"Safety", color:"#b9860f", icon:"⛑️", group:"facilities"}
@@ -1753,9 +1753,7 @@ function openLocationPanel(locId){
   panelGallery = locGalleryImages(loc);
   var hero = panelGallery.length
     ? '<img src="'+esc(panelGallery[0].url)+'" alt="'+esc(loc.name)+'">'
-    : (loc.panorama
-        ? '<img src="'+esc(loc.panorama)+'" alt="'+esc(loc.name)+'">'
-        : '<div class="lp-noimg">No photo yet for this location</div>');
+    : '<div class="lp-noimg">No photo yet for this location</div>';
 
   var meta = "";
   if(loc.hours) meta += '<div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>'+esc(loc.hours)+'</span></div>';
@@ -1853,9 +1851,9 @@ function defaultMapSVG(){
   '<rect x="670" y="230" width="150" height="110" rx="6" fill="#aeb2ba"/>'+
   '<rect x="640" y="380" width="170" height="90" rx="6" fill="#b9bcc4"/>'+
   '<circle cx="770" cy="230" r="70" fill="#cfd2d8" opacity=".8"/>'+
-  '<rect x="20" y="500" width="90" height="60" rx="6" fill="#0e6b34" opacity=".85"/>'+
-  '<path d="M60 625 V520" stroke="#0e6b34" stroke-width="14"/>'+
-  '<g fill="none" stroke="#0e6b34" stroke-width="3" stroke-dasharray="10 8" opacity=".55">'+
+  '<rect x="20" y="500" width="90" height="60" rx="6" fill="#118a43" opacity=".85"/>'+
+  '<path d="M60 625 V520" stroke="#118a43" stroke-width="14"/>'+
+  '<g fill="none" stroke="#118a43" stroke-width="3" stroke-dasharray="10 8" opacity=".55">'+
     '<path d="M60 520 Q220 470 320 460 Q420 445 480 340"/>'+
     '<path d="M480 340 Q560 300 610 300"/>'+
     '<path d="M480 340 Q520 420 620 430"/>'+
@@ -1885,41 +1883,33 @@ function renderPins(canvasEl, opts){
     pin.setAttribute("data-loc-id", loc.id);
     pin.innerHTML = pinDot(cat) + '<div class="pin-label">'+esc(loc.name)+'</div>';
     canvasEl.appendChild(pin);
-    if(opts.editing){
+    if(opts.editing && STATE.adminMapMode==="move"){
       makeDraggable(pin, canvasEl, loc);
-      pin.addEventListener("click", function(e){
-        e.stopPropagation();
-        if(pin._suppressClick){ pin._suppressClick = false; return; }
-        openLocForm(loc.id);
-      });
     } else {
       pin.addEventListener("click", function(e){
         e.stopPropagation();
-        var wasActive = pin.classList.contains("active");
-        $all(".pin.active", canvasEl).forEach(function(p){ p.classList.remove("active"); });
-        if(wasActive){
-          closeLocationPanel();
-        } else {
-          pin.classList.add("active");
-          openLocationPanel(loc.id);
+        if(opts.editing){ openLocForm(loc.id); }
+        else {
+          var wasActive = pin.classList.contains("active");
+          $all(".pin.active", canvasEl).forEach(function(p){ p.classList.remove("active"); });
+          if(wasActive){
+            closeLocationPanel();
+          } else {
+            pin.classList.add("active");
+            openLocationPanel(loc.id);
+          }
         }
       });
     }
   });
 }
 function makeDraggable(pin, canvasEl, loc){
-  var dragging=false, moved=false, sx=0, sy=0;
+  var dragging=false;
   pin.addEventListener("pointerdown", function(e){
-    dragging=true; moved=false; sx=e.clientX; sy=e.clientY; pin._suppressClick=false;
-    try{ pin.setPointerCapture(e.pointerId); }catch(err){}
-    e.stopPropagation();
+    dragging=true; pin.setPointerCapture(e.pointerId); e.stopPropagation();
   });
   pin.addEventListener("pointermove", function(e){
     if(!dragging) return;
-    if(!moved){
-      if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy) < 5) return;
-      moved=true;
-    }
     var rect = canvasEl.getBoundingClientRect();
     var x = ((e.clientX-rect.left)/rect.width)*100;
     var y = ((e.clientY-rect.top)/rect.height)*100;
@@ -1929,17 +1919,13 @@ function makeDraggable(pin, canvasEl, loc){
   });
   pin.addEventListener("pointerup", function(e){
     dragging=false;
-    if(moved && loc._tmpX!=null){
-      pin._suppressClick = true;
+    if(loc._tmpX!=null){
       loc.mapX = Math.round(loc._tmpX*10)/10; loc.mapY = Math.round(loc._tmpY*10)/10;
       delete loc._tmpX; delete loc._tmpY;
       saveLocations().then(function(){ toast("Marker moved"); }).catch(function(err){ toast("Save failed: " + err.message); });
       renderAdminLocTable();
-    } else {
-      delete loc._tmpX; delete loc._tmpY;
     }
   });
-  pin.addEventListener("pointercancel", function(){ dragging=false; delete loc._tmpX; delete loc._tmpY; });
 }
 
 function focusMarker(locId){
@@ -2116,7 +2102,7 @@ function renderMapConnections(){
     var line=document.createElementNS("http://www.w3.org/2000/svg","line");
     line.setAttribute("x1",c.x1+"%");line.setAttribute("y1",c.y1+"%");
     line.setAttribute("x2",c.x2+"%");line.setAttribute("y2",c.y2+"%");
-    line.setAttribute("stroke","rgba(14,107,52,.3)");
+    line.setAttribute("stroke","rgba(17,138,67,.3)");
     line.setAttribute("stroke-width","2");
     line.setAttribute("stroke-dasharray","6,4");
     svg.appendChild(line);
@@ -2362,17 +2348,10 @@ function renderTourPage(){
   var startId = STATE.currentSceneLocId && locById(STATE.currentSceneLocId) ? STATE.currentSceneLocId : scenes[0].id;
   var config = buildPannellumConfig();
   if(viewerInstance){ try{ viewerInstance.destroy(); }catch(e){} }
-  try{
-    viewerInstance = window.pannellum.viewer("panoViewer", {
-      "default": {"firstScene": startId, "sceneFadeDuration": 600, "autoLoad": true},
-      "scenes": config
-    });
-  }catch(err){
-    viewerInstance = null;
-    $("#panoViewer").innerHTML = '<p class="no-scenes">The 360&deg; viewer could not start (' + esc(String(err && err.message || err)) + '). <button class="btn btn-ghost btn-sm" onclick="location.reload()" style="margin-left:8px;">Reload page</button></p>';
-    $("#tourSceneTitle").textContent = "Viewer unavailable";
-    return;
-  }
+  viewerInstance = window.pannellum.viewer("panoViewer", {
+    "default": {"firstScene": startId, "sceneFadeDuration": 600, "autoLoad": true},
+    "scenes": config
+  });
   viewerInstance.on("scenechange", function(sceneId){
     STATE.currentSceneLocId = sceneId;
     var loc = locById(sceneId);
@@ -2869,7 +2848,7 @@ $("#locForm").addEventListener("submit", async function(e){
 $("#addLocationBtn").addEventListener("click", function(){ openLocForm(null); });
 
 /* ---- Categories admin ---- */
-  var CAT_COLORS = ["#0e6b34","#0b5128","#2563a8","#12803f","#c2410c","#3d4046","#b3331f","#5b6e63","#7c3aed","#0891b2"];
+  var CAT_COLORS = ["#118a43","#0d6e35","#2563a8","#16a552","#c2410c","#3d4046","#b3331f","#5b6e63","#7c3aed","#0891b2"];
 function renderAdminCatTable(){
   var groupLabels = { laboratories: "Laboratories", offices: "Offices", facilities: "Facilities" };
   $("#adminCatTableBody").innerHTML = STATE.categories.map(function(c){
