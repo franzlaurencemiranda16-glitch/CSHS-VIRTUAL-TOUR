@@ -2185,9 +2185,14 @@ function panoDimsFor(loc){ return (loc && loc.panoW > 0 && loc.panoH > 0) ? { w:
 function panoPartialParams(loc){
   var d = panoDimsFor(loc);
   if(!d) return null;
-  var ratio = d.w / d.h;
-  if(ratio < 2.6 || ratio > 15) return null;
-  var haov = Math.max(40, Math.min(360, Number(loc.panoHAOV) || 180));
+  var haov = Number(loc.panoHAOV) || 0;
+  if(haov > 0){
+    haov = Math.max(40, Math.min(360, haov));
+  } else {
+    var ratio = d.w / d.h;
+    if(ratio < 2.6 || ratio > 15) return null;
+    haov = 180;
+  }
   var vaov = Math.min(180, haov * d.h / d.w);
   if(vaov < 8) return null;
   return { haov: haov, vaov: vaov, hfov: 70,
@@ -2603,7 +2608,7 @@ function populateCategorySelect(){
   $("#lfCategory").innerHTML = STATE.categories.map(function(c){ return '<option value="'+c.id+'">'+c.icon+' '+esc(c.name)+'</option>'; }).join("");
 }
 var editingLocId = null;
-var pendingCover = "", pendingPano = "", pendingPanoW = 0, pendingPanoH = 0, pendingGallery = [];
+var pendingCover = "", pendingPano = "", pendingPanoW = 0, pendingPanoH = 0, pendingPanoHAOV = 0, pendingGallery = [];
 
 function renderGalleryList(){
   var list = $("#lfGalleryList");
@@ -2677,6 +2682,7 @@ function openLocForm(locId){
   pendingPano = loc ? (loc.panorama||"") : "";
   pendingPanoW = loc && loc.panoW > 0 ? loc.panoW : 0;
   pendingPanoH = loc && loc.panoH > 0 ? loc.panoH : 0;
+  pendingPanoHAOV = loc && loc.panoHAOV > 0 ? loc.panoHAOV : 0;
   pendingGallery = (loc && loc.images ? loc.images : []).map(function(im){
     return typeof im === "string" ? {url:im, caption:""} : {url:im.url, caption:im.caption||""};
   });
@@ -2689,7 +2695,9 @@ function openLocForm(locId){
   panoInfo.style.display = pendingPano ? "block" : "none";
   if(pendingPano){
     var pnote = pendingPano.indexOf("data:") === 0 ? "embedded image (re-upload to store on server)" : pendingPano;
-    if(pendingPanoW > 0 && pendingPanoH > 0 && pendingPanoW / pendingPanoH >= 2.6){
+    if(pendingPanoHAOV > 0){
+      pnote += " \u2014 ~" + pendingPanoHAOV + "\u00b0 panorama, blur-padded for smooth up/down rotation";
+    } else if(pendingPanoW > 0 && pendingPanoH > 0 && pendingPanoW / pendingPanoH >= 2.6){
       pnote += " \u2014 phone panorama strip (" + pendingPanoW + "\u00d7" + pendingPanoH + "), displayed as a ~180\u00b0 partial 360\u00b0 view";
     }
     panoInfo.textContent = "Current panorama: " + pnote;
@@ -2735,12 +2743,15 @@ function onPanoFiles(files){
     pendingPano = f.url;
     pendingPanoW = f.width || 0;
     pendingPanoH = f.height || 0;
+    pendingPanoHAOV = f.haov || 0;
     updateUploadPreview("lfPanoBox", pendingPano, "");
     var info = $("#lfPanoInfo");
     info.style.display = "block";
     var msgs = [];
-    if(f.width / Math.max(1, f.height) >= 2.6){
-      msgs.push("Phone panorama strip (" + f.width + "×" + f.height + ") detected — it will display as a ~180° partial 360° view at correct proportions (no stretching). Tip: use Google Photo Sphere / Street View app to capture a true full-sphere 360°.");
+    if(f.haov){
+      msgs.push("Phone panorama strip detected \u2014 padded to a comfortable 360\u00b0 view (~" + f.haov + "\u00b0 sweep, " + f.width + "\u00d7" + f.height + ") so you can look up and down smoothly.");
+    } else if(f.width / Math.max(1, f.height) >= 2.6){
+      msgs.push("Phone panorama strip (" + f.width + "\u00d7" + f.height + ") detected \u2014 it will display as a ~180\u00b0 partial 360\u00b0 view at correct proportions (no stretching). Tip: use Google Photo Sphere / Street View app to capture a true full-sphere 360\u00b0.");
     } else if(!f.isPano){
       msgs.push("Uploaded image is " + f.width + "×" + f.height + " — this doesn't look like a 2:1 panorama, so the 360° view may look distorted.");
     }
@@ -2823,6 +2834,7 @@ $("#locForm").addEventListener("submit", async function(e){
     panorama: pendingPano,
     panoW: pendingPanoW,
     panoH: pendingPanoH,
+    panoHAOV: pendingPanoHAOV,
     video: $("#lfVideo").value.trim(),
     contact: $("#lfContact").value.trim(),
     hours: $("#lfHours").value.trim(),
@@ -2986,6 +2998,7 @@ function quickUploadPano(locId, files){
     loc.panorama = out[0].url;
     loc.panoW = out[0].width || 0;
     loc.panoH = out[0].height || 0;
+    loc.panoHAOV = out[0].haov || 0;
     saveLocations().then(function(){
       var msg = loc.name + ": 360\u00b0 image saved" + ((loc.hotspots||[]).length ? " (hotspots kept)" : "");
       if(out[0].width < 4000){

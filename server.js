@@ -257,6 +257,36 @@ async function processImage(buffer, opts) {
 
 function publicUrl(filename) { return "/uploads/" + filename; }
 
+/**
+ * Phone-panorama strips (much wider than 2:1) only cover a thin slice of the
+ * sphere, which locks the 360° viewer's pitch and yaw. Blur-extend the strip
+ * vertically (centered, so the original pixels keep their exact pitch mapping)
+ * and the viewer gets comfortable up/down rotation with soft edges.
+ * Returns null when the strip is tall enough already or on any error.
+ */
+async function padPanoStrip(filename, width, height, targetVaov, haov) {
+  try {
+    const targetH = Math.round((width * targetVaov) / haov);
+    if (!(targetH > height + 16) || targetH > width * 1.2) return null;
+    const src = path.join(UPLOAD_DIR, filename);
+    const original = await sharp(src, { failOn: "none" }).rotate().toBuffer();
+    const bg = await sharp(src, { failOn: "none" }).rotate()
+      .resize(width, targetH, { fit: "fill" })
+      .blur(30)
+      .toBuffer();
+    const out = await sharp(bg)
+      .composite([{ input: original, top: Math.round((targetH - height) / 2), left: 0 }])
+      .jpeg({ quality: 92, chromaSubsampling: "4:4:4", progressive: true })
+      .toBuffer();
+    const padFile = filename.replace(/\.[^.]+$/, "") + "-pad.jpg";
+    fs.writeFileSync(path.join(UPLOAD_DIR, padFile), out);
+    return { file: padFile, url: publicUrl(padFile), width: width, height: targetH };
+  } catch (e) {
+    console.error("pano pad failed", e);
+    return null;
+  }
+}
+
 async function saveUpload(buffer, originalName, opts) {
   const processed = await processImage(buffer, opts);
   const base = Date.now().toString(36) + "-" + crypto.randomBytes(5).toString("hex");
@@ -385,11 +415,20 @@ app.post("/api/upload", requireAuth, (req, res) => {
       const isPano = kind === "panorama";
       const results = [];
       for (const f of req.files) {
-        const r = await saveUpload(f.buffer, f.originalname, {
+        let r = await saveUpload(f.buffer, f.originalname, {
           maxWidth: isPano ? 16384 : 2400,
           quality: isPano ? 95 : 90,
           progressive: isPano
         });
+        if (isPano && r.width && r.height && r.width / r.height >= 2.6) {
+          const padded = await padPanoStrip(r.file, r.width, r.height, 100, 180);
+          if (padded) {
+            r = {
+              url: padded.url, file: padded.file, width: padded.width, height: padded.height,
+              isPano: true, haov: 180, originalUrl: publicUrl(r.file)
+            };
+          }
+        }
         results.push(r);
       }
       res.json({ ok: true, files: results });
