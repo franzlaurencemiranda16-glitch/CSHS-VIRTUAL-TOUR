@@ -11,13 +11,13 @@
   "phone": "",
   "spidey": {
     "default": "Welcome to Cabiao Senior High School! Formerly known as Cabiao National Senior High School, the school was established in 2016 as part of the K–12 Senior High School Program. Located in Brgy. Palasinan, Cabiao, Nueva Ecija, it now offers the Strengthened Senior High School Curriculum through the Academic and Technical-Professional (TechPro) tracks. This Virtual Tour Map provides an interactive way to explore the school’s laboratories, offices, and other key areas.",
-    "loc-gate": "Thwip! Hey there, friendly neighborhood student! I'm Spiderman, and this — this is the Main Gate of Cabiao Senior High School! Every hero needs a starting point, and this is where all the great adventures begin. Swing on in, the campus is waiting!",
-    "loc-principal": "Whoa, careful — this is the Principal's Office! This is where the real power moves happen. The principal and the staff are like the Avengers of this school — keeping everything in order so you can focus on being awesome. Respect the HQ!",
-    "loc-ict": "Spider-sense tingling — this is the ICT Laboratory! This is where the real web-slinging happens... the digital kind! Students learn coding, programming, and all sorts of tech wizardry in here.",
-    "loc-library": "Shh — even Spiderman needs to study! This is the Library, a quiet zone packed with books, references, and knowledge. Think of it as the Forbidden Archive, but way cooler. Grab a book and level up your brainpower!",
-    "loc-canteen": "My spider-sense is picking up... food! This is the Campus Canteen — the refueling station for every hero-in-training. Whether you need a quick snack or a full meal, this is the spot!",
-    "loc-court": "This is the Covered Court — the arena where champions are made! Sports events, assemblies, intramurals, school celebrations — this is where the energy is electric!",
-    "loc-clinic": "If you ever get hurt — don't worry, Spiderman's got your back! This is the School Clinic, staffed with real-life heroes who patch you up and keep you healthy!",
-    "loc-guidance": "Hey, even Spiderman needs someone to talk to sometimes. This is the Guidance Office — a safe zone where you can get counseling, advice, and support. No judgment, just help!"
+    "loc-gate": "",
+    "loc-principal": "",
+    "loc-ict": "",
+    "loc-library": "",
+    "loc-canteen": "",
+    "loc-court": "",
+    "loc-clinic": "",
+    "loc-guidance": ""
   }
 }

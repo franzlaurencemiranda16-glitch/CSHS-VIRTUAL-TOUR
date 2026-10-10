@@ -1070,7 +1070,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 
         <div class="panel">
           <div class="panel-head"><h3>Spider-Man Narrator</h3></div>
-          <p class="field-hint" style="margin-bottom:12px;">Spider-Man speaks each location's own description (edit it in <strong>Locations</strong>). Use the fields below for the greeting and for special overrides when a location has no description.</p>
+          <p class="field-hint" style="margin-bottom:12px;">Type here and Spider-Man says exactly that for each location (leave a location empty and he reads the location's description instead). The greeting plays when the avatar is clicked.</p>
           <div class="field full">
             <label>Voice</label>
             <div class="voice-grid">
@@ -1134,7 +1134,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
           <div class="field"><label>Category</label><select id="lfCategory" required></select></div>
           <div class="field"><label>Status</label><select id="lfStatus"><option value="published">Published</option><option value="draft">Draft</option></select></div>
           <div class="field full"><label>Short description (shown on cards)</label><input id="lfShort" maxlength="90" required></div>
-          <div class="field full"><label>Full description</label><textarea id="lfFull" required></textarea></div>
+          <div class="field full"><label>Full description</label><textarea id="lfFull" required></textarea><p class="field-hint">Spider-Man reads this aloud when the location opens (unless you type custom text in Settings &rarr; Spider-Man Narrator).</p></div>
           <div class="field full"><label>Additional information (optional)</label><textarea id="lfAdditional" placeholder="Office hours, rules, amenities, or anything else visitors should know."></textarea></div>
           <div class="field full">
             <label>Featured photo (cover)</label>
@@ -3601,15 +3601,15 @@ init();
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
     }
   }
-  /* Speech for a location: the location's own description (edited in the
-     Locations admin) is what Spider-Man says. These Settings fields act as
-     a special override / fallback only when a location has no description. */
+  /* Speech for a location: what you type in Settings → Spider-Man Narrator
+     wins; otherwise the location's own description (from Locations) speaks;
+     built-in demo text only as a last resort. */
   function locSpeech(locId){
+    var sp = spideyStore();
+    if(sp[locId] && String(sp[locId]).trim()) return String(sp[locId]).trim();
     var t = "";
     try{ if(typeof window._locSpeechText === "function") t = String(window._locSpeechText(locId) || "").trim(); }catch(e){}
     if(t) return t;
-    var sp = spideyStore();
-    if(sp[locId] && String(sp[locId]).trim()) return String(sp[locId]).trim();
     if(DESCS[locId]) return DESCS[locId];
     return "Spider-sense tingling! You've found a cool spot on campus. Keep exploring, there's always more to discover at Cabiao Senior High!";
   }
