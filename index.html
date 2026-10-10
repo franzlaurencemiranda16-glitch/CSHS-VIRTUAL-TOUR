@@ -1070,7 +1070,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 
         <div class="panel">
           <div class="panel-head"><h3>Spider-Man Narrator</h3></div>
-          <p class="field-hint" style="margin-bottom:12px;">Type here and Spider-Man says exactly that for each location (leave a location empty and he reads the location's description instead). The greeting plays when the avatar is clicked.</p>
+          <p class="field-hint" style="margin-bottom:12px;">Type here and Spider-Man says exactly that for each location (leave a location empty and he reads the location's description instead). The greeting plays when the avatar is clicked. <strong>Text saves automatically when you click out of a box</strong> &mdash; or press Save changes below.</p>
           <div class="field full">
             <label>Voice</label>
             <div class="voice-grid">
@@ -3453,6 +3453,15 @@ $("#settingsForm").addEventListener("submit", async function(e){
   }
 });
 
+/* Narrator text saves itself when you click out of the box — you never lose text. */
+Array.prototype.forEach.call(document.querySelectorAll('#settingsForm textarea[id^="cfSpidey"]'), function(t){
+  t.addEventListener("change", function(){
+    var f = $("#settingsForm");
+    if(!f.checkValidity()){ toast("Couldn't save — server data didn't load. Refresh the page."); return; }
+    f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true }));
+  });
+});
+
 /* ---- Narrator / branding images (stored as server file URLs) ---- */
 async function uploadNarratorImage(file, key){
   var files = await uploadFiles([file], "image");
@@ -3600,6 +3609,7 @@ init();
     for(var k in DEFAULT_DESCS){
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
     }
+    DESCS["default"] = (sp.default && sp.default.trim()) || "";
   }
   /* Speech for a location: what you type in Settings → Spider-Man Narrator
      wins; otherwise the location's own description (from Locations) speaks;
@@ -3619,6 +3629,7 @@ init();
     for(var k in DEFAULT_DESCS){
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
     }
+    DESCS["default"] = (sp.default && sp.default.trim()) || "";
     DEFAULT_DESC = DESCS["default"] || DEFAULT_GREETING;
   };
   var DEFAULT_DESC = DESCS["default"] || DEFAULT_GREETING;
@@ -3696,9 +3707,11 @@ init();
     refreshVoiceBtn();
     avatarEl.onclick = function(){
       show();
+      var custom = DESCS["default"] || "";
+      if(custom){ spokenOnce = true; speak(custom); return; }
       if(!spokenOnce){
         spokenOnce = true;
-        speak(DEFAULT_DESC);
+        speak(DEFAULT_GREETING);
       } else {
         speak("Hey hey! Spiderman's still here, ready to roll! Click on any location and I'll tell you all about it!");
       }
