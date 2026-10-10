@@ -3349,11 +3349,20 @@ function updateVoiceValLabels(){
   if(r) $("#stVoiceRateVal").textContent = parseFloat(r.value).toFixed(2) + "\u00d7";
   if(p) $("#stVoicePitchVal").textContent = parseFloat(p.value).toFixed(2);
 }
+/* Spoken only: voice engines say "Ca-BEE-ow" — we feed them "Kabyaw" instead.
+   The text on screen keeps the real spelling. */
+window.pronounceSpeech = function(t){
+  return String(t).replace(/cabiao/gi, function(m){
+    if(m === "CABIAO") return "KABYAW";
+    if(m === "Cabiao") return "Kabyaw";
+    return "kabyaw";
+  });
+};
 function previewNarratorVoice(voiceURI, rate, pitch){
   try{
     if(!('speechSynthesis' in window)){ toast("Voice preview is not supported in this browser"); return; }
     speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance("Thwip! This is how your tour guide will sound at Cabiao Senior High School!");
+    var u = new SpeechSynthesisUtterance(window.pronounceSpeech("Thwip! This is how your tour guide will sound at Cabiao Senior High School!"));
     u.rate = rate; u.pitch = pitch; u.volume = 1;
     if(voiceURI){
       var vs = allVoices();
@@ -3781,7 +3790,8 @@ init();
       return;
     }
     speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
+    var spokenText = (window.pronounceSpeech ? window.pronounceSpeech(text) : text);
+    var u = new SpeechSynthesisUtterance(spokenText);
     var nv = { voiceURI: "", rate: 1, pitch: 0.95 };
     try{
       if(typeof window._narratorVoiceCfg === 'function'){
