@@ -1110,7 +1110,6 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 <!-- ============ SPEAKING MODE PROMPT ============ -->
 <div class="speak-modal hidden" id="speakModeModal">
   <div class="speak-modal-card">
-    <img class="speak-modal-spidey" src="spidey-guide.png" alt="Spider-Man">
     <h3>Enable audio?</h3>
     <div class="speak-modal-divider"></div>
     <div class="speak-modal-actions">
@@ -3955,7 +3954,7 @@ init();
 }
 .spidey-voice-btn:hover{background:#f0f0f0;transform:scale(1.15);}
 .speak-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:rgba(9,12,16,.55);padding:20px;}
-.speak-modal-card{background:#fff;border-radius:9px;max-width:470px;width:100%;padding:82px 44px 40px;position:relative;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:speakCardIn .28s ease-out;}
+.speak-modal-card{background:#fff;border-radius:9px;max-width:470px;width:100%;padding:40px 44px 40px;position:relative;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:speakCardIn .28s ease-out;}
 @keyframes speakCardIn{from{opacity:0;transform:translateY(14px) scale(.97);}to{opacity:1;transform:none;}}
 .speak-modal-spidey{position:absolute;top:-70px;left:50%;width:138px;height:auto;pointer-events:none;filter:drop-shadow(0 16px 16px rgba(0,0,0,.4));animation:spideyPopOut .75s cubic-bezier(.2,1.5,.4,1) .15s both;}
 @keyframes spideyPopOut{
@@ -4050,7 +4049,7 @@ body.fs-lock{overflow:hidden;}
   .stat span{font-size:10px;}
   .btn{padding:14px 20px;font-size:14px;}
   .scene-card{width:118px;}
-  .speak-modal-card{padding:66px 18px 30px;}
+  .speak-modal-card{padding:36px 18px 30px;}
   .speak-modal-spidey{width:106px;top:-54px;}
   .speak-modal-card h3{font-size:22px;margin-bottom:18px;}
   .speak-yes,.speak-no{min-width:120px;padding:14px 0;font-size:14px;}
