@@ -1,0 +1,58 @@
+[
+  {
+    "id": "cat-academic",
+    "name": "Academic",
+    "color": "#c8102e",
+    "icon": "📚",
+    "group": "facilities"
+  },
+  {
+    "id": "cat-admin",
+    "name": "Administration",
+    "color": "#1a1d21",
+    "icon": "🏛️",
+    "group": "offices"
+  },
+  {
+    "id": "cat-lab",
+    "name": "Laboratory",
+    "color": "#b3331f",
+    "icon": "🔬",
+    "group": "laboratories"
+  },
+  {
+    "id": "cat-student",
+    "name": "Student Services",
+    "color": "#5b6e63",
+    "icon": "🎓",
+    "group": "offices"
+  },
+  {
+    "id": "cat-sports",
+    "name": "Sports",
+    "color": "#8a1220",
+    "icon": "🏐",
+    "group": "facilities"
+  },
+  {
+    "id": "cat-facilities",
+    "name": "Facilities",
+    "color": "#44474d",
+    "icon": "🏫",
+    "group": "facilities"
+  },
+  {
+    "id": "cat-entrance",
+    "name": "Entrance",
+    "color": "#2b2f36",
+    "icon": "🚪",
+    "group": "facilities"
+  },
+  {
+    "id": "cat-safety",
+    "name": "Safety",
+    "color": "#b9860f",
+    "icon": "⛑️",
+    "group": "facilities"
+  }
+]

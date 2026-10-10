@@ -1070,7 +1070,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 
         <div class="panel">
           <div class="panel-head"><h3>Spider-Man Narrator</h3></div>
-          <p class="field-hint" style="margin-bottom:12px;">Edit what Spider-Man says for each location and the default greeting.</p>
+          <p class="field-hint" style="margin-bottom:12px;">Spider-Man speaks each location's own description (edit it in <strong>Locations</strong>). Use the fields below for the greeting and for special overrides when a location has no description.</p>
           <div class="field full">
             <label>Voice</label>
             <div class="voice-grid">
@@ -1446,6 +1446,31 @@ async function uploadFiles(files, kind){
 /* ============================================================
    PERSISTENCE (API-backed; falls back to seed data offline)
    ============================================================ */
+async function loadStaticFallback(){
+  var fb = null;
+  try{
+    var res = await fetch("data/site-static.json", {cache:"no-store"});
+    if(res.ok) fb = await res.json();
+  }catch(e){}
+  if(!fb) return false;
+  /* On static hosts (GitHub Pages subpaths) absolute /uploads/... URLs break —
+     use relative ones so photos resolve under any base path. */
+  var fix = function(u){ return (typeof u === "string" && u.indexOf("/uploads/") === 0) ? u.slice(1) : u; };
+  var locs = Array.isArray(fb.locations) ? fb.locations : [];
+  locs.forEach(function(l){
+    if(!l) return;
+    l.panorama = fix(l.panorama);
+    l.cover = fix(l.cover);
+    if(Array.isArray(l.images)) l.images = l.images.map(fix);
+  });
+  STATE.locations = locs.length ? locs : DEFAULT_LOCATIONS.slice();
+  STATE.categories = (Array.isArray(fb.categories) && fb.categories.length) ? fb.categories : DEFAULT_CATEGORIES.slice();
+  STATE.content = Object.assign({}, DEFAULT_CONTENT, (fb.content && fb.content.schoolName) ? fb.content : {});
+  STATE.settings = Object.assign({}, DEFAULT_SETTINGS, (fb.settings && fb.settings.schoolName) ? fb.settings : {});
+  STATE.mapImage = (fb.map && fb.map.url) ? fix(fb.map.url) : null;
+  READONLY = true;
+  return true;
+}
 async function loadAll(){
   try{
     var loc = await apiGet("/api/locations");
@@ -1461,13 +1486,17 @@ async function loadAll(){
     if(!Array.isArray(loc) || !loc.length) await saveLocations();
     if(!Array.isArray(cat) || !cat.length) await saveCategories();
   }catch(e){
-    console.warn("API unavailable, using seed data.", e);
-    READONLY = true;
-    STATE.locations = DEFAULT_LOCATIONS.slice();
-    STATE.categories = DEFAULT_CATEGORIES.slice();
-    STATE.content = Object.assign({}, DEFAULT_CONTENT);
-    STATE.settings = Object.assign({}, DEFAULT_SETTINGS);
-    STATE.mapImage = null;
+    console.warn("API unavailable, trying static site snapshot.", e);
+    var ok = false;
+    try{ ok = await loadStaticFallback(); }catch(e2){}
+    if(!ok){
+      READONLY = true;
+      STATE.locations = DEFAULT_LOCATIONS.slice();
+      STATE.categories = DEFAULT_CATEGORIES.slice();
+      STATE.content = Object.assign({}, DEFAULT_CONTENT);
+      STATE.settings = Object.assign({}, DEFAULT_SETTINGS);
+      STATE.mapImage = null;
+    }
   }
 }
 async function saveLocations(){ return apiSend("PUT", "/api/locations", STATE.locations); }
@@ -1510,6 +1539,11 @@ function toast(msg){
 window.toast = toast;
 window._narratorVoiceCfg = narratorVoiceCfg;
 window._spideyContent = function(){ return (STATE.content && STATE.content.spidey) || {}; };
+window._locSpeechText = function(locId){
+  var loc = locById(locId);
+  if(!loc) return "";
+  return String(loc.full || loc.short || "").trim();
+};
 /* fullscreen helper — iPhone Safari has no Element.requestFullscreen, so fall back
    to a fixed-position overlay that behaves like fullscreen */
 function fsResizeSoon(){ setTimeout(function(){ try{ window.dispatchEvent(new Event("resize")); }catch(e){} }, 80); }
@@ -3567,6 +3601,18 @@ init();
       DESCS[k] = (sp[k] && sp[k].trim()) || DEFAULT_DESCS[k];
     }
   }
+  /* Speech for a location: the location's own description (edited in the
+     Locations admin) is what Spider-Man says. These Settings fields act as
+     a special override / fallback only when a location has no description. */
+  function locSpeech(locId){
+    var t = "";
+    try{ if(typeof window._locSpeechText === "function") t = String(window._locSpeechText(locId) || "").trim(); }catch(e){}
+    if(t) return t;
+    var sp = spideyStore();
+    if(sp[locId] && String(sp[locId]).trim()) return String(sp[locId]).trim();
+    if(DESCS[locId]) return DESCS[locId];
+    return "Spider-sense tingling! You've found a cool spot on campus. Keep exploring, there's always more to discover at Cabiao Senior High!";
+  }
   loadDescs();
   window._updateSpideyDescs = function(){
     var sp = spideyStore();
@@ -3799,9 +3845,8 @@ init();
 
   // Hook into the IIFE's openDetail and loadScene via global callbacks
   window._spideyOnLoc = function(locId){
-    var d = DESCS[locId] || ("Spider-sense tingling! You've found a cool spot on campus. Keep exploring, there's always more to discover at Cabiao Senior High!");
     show();
-    speak(d);
+    speak(locSpeech(locId));
   };
 
   // Also catch clicks via event delegation as fallback
@@ -3809,7 +3854,7 @@ init();
     var card = e.target.closest('[data-open-loc], [data-loc-id]');
     if(card){
       var locId = card.getAttribute('data-open-loc') || card.getAttribute('data-loc-id');
-      if(locId && DESCS[locId]){ show(); speak(DESCS[locId]); }
+      if(locId){ show(); speak(locSpeech(locId)); }
     }
   });
 
@@ -3821,19 +3866,27 @@ init();
 /* ---- Dynamic image loading ---- */
 (function(){
   async function loadSiteImages(){
+    var data = null;
     try {
       var res = await fetch('/api/images');
-      var data = await res.json();
-      if(data.logo){
-        document.querySelectorAll('img[alt="CSHS logo"]').forEach(function(img){ img.src = data.logo; });
-      }
-      if(data.avatar){
-        document.querySelectorAll('.spidey-img').forEach(function(img){ img.src = data.avatar; });
-      }
-      if(data.experto){
-        document.querySelectorAll('img[alt="C-EXPERTO"]').forEach(function(img){ img.src = data.experto; });
-      }
+      if(res.ok) data = await res.json();
     } catch(e){}
+    if(!data || (!data.logo && !data.avatar && !data.experto)){
+      try{
+        var r2 = await fetch('data/images.json', {cache:"no-store"});
+        if(r2.ok) data = await r2.json();
+      }catch(e){}
+    }
+    if(!data) return;
+    if(data.logo){
+      document.querySelectorAll('img[alt="CSHS logo"]').forEach(function(img){ img.src = data.logo; });
+    }
+    if(data.avatar){
+      document.querySelectorAll('.spidey-img, .speak-modal-spidey').forEach(function(img){ img.src = data.avatar; });
+    }
+    if(data.experto){
+      document.querySelectorAll('img[alt="C-EXPERTO"]').forEach(function(img){ img.src = data.experto; });
+    }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', loadSiteImages);
   else loadSiteImages();

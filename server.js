@@ -52,6 +52,27 @@ function writeDB(name, value) {
   const tmp = file + ".tmp";
   fs.writeFileSync(tmp, JSON.stringify(value, null, 2), "utf-8");
   fs.renameSync(tmp, file);
+  writeStaticSnapshot();
+}
+
+/* Keep a static snapshot of the site data under public/data/ so that
+   git-based deployments (e.g. GitHub Pages) can show the real photos and
+   texts even without the Node API. Regenerated on every data change. */
+function writeStaticSnapshot() {
+  try {
+    const dir = path.join(PUBLIC_DIR, "data");
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const snap = {
+      locations: readDB("locations", DEFAULT_LOCATIONS),
+      categories: readDB("categories", DEFAULT_CATEGORIES),
+      content: readDB("content", DEFAULT_CONTENT),
+      settings: readDB("settings", DEFAULT_SETTINGS),
+      map: readDB("map-image", { url: "" })
+    };
+    fs.writeFileSync(path.join(dir, "site-static.json"), JSON.stringify(snap), "utf-8");
+    const imgs = readDB("images", { logo: "", avatar: "", experto: "" });
+    fs.writeFileSync(path.join(dir, "images.json"), JSON.stringify(imgs), "utf-8");
+  } catch (e) { console.warn("static snapshot failed:", e.message); }
 }
 
 /* ---------- seed defaults on first run ---------- */
@@ -109,6 +130,7 @@ seedIfMissing("settings", DEFAULT_SETTINGS);
 seedIfMissing("map-image", DEFAULT_MAP);
 seedIfMissing("images", { logo: "", avatar: "", experto: "" });
 seedIfMissing("sessions", {});
+writeStaticSnapshot();
 
 /* normalise older data files (add missing fields) */
 (function normalizeLocations() {

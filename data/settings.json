@@ -1,0 +1,11 @@
+{
+  "schoolName": "Cabiao Senior High School",
+  "projectTitle": "Interactive Virtual Campus Tour",
+  "shortDescription": "Explore the laboratories, offices, and facilities of Cabiao Senior High School through an interactive digital campus map.",
+  "logo": "/uploads/mui7x6dc-889eeea60a.jpg",
+  "narrator": {
+    "voiceURI": "",
+    "rate": 1,
+    "pitch": 0.95
+  }
+}
