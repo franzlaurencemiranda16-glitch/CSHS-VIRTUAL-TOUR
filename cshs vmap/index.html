@@ -3349,14 +3349,20 @@ function updateVoiceValLabels(){
   if(r) $("#stVoiceRateVal").textContent = parseFloat(r.value).toFixed(2) + "\u00d7";
   if(p) $("#stVoicePitchVal").textContent = parseFloat(p.value).toFixed(2);
 }
-/* Spoken only: voice engines say "Ca-BEE-ow" — we feed them "Kabyaw" instead.
-   The text on screen keeps the real spelling. */
+/* Spoken only: voice engines say "Ca-BEE-ow" / "Eh-SEE-jah" — we feed them
+   "Kabyaw" / "Eciha" instead. The text on screen keeps the real spelling. */
 window.pronounceSpeech = function(t){
-  return String(t).replace(/cabiao/gi, function(m){
-    if(m === "CABIAO") return "KABYAW";
-    if(m === "Cabiao") return "Kabyaw";
-    return "kabyaw";
-  });
+  return String(t)
+    .replace(/cabiao/gi, function(m){
+      if(m === "CABIAO") return "KABYAW";
+      if(m === "Cabiao") return "Kabyaw";
+      return "kabyaw";
+    })
+    .replace(/ecija/gi, function(m){
+      if(m === "ECIJA") return "ECIHA";
+      if(m === "Ecija") return "Eciha";
+      return "eciha";
+    });
 };
 function previewNarratorVoice(voiceURI, rate, pitch){
   try{
