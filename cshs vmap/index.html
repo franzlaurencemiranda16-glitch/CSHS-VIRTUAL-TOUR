@@ -252,7 +252,8 @@ a{color:inherit;}
 
 /* ---------- Virtual tour ---------- */
 .tour-page{padding:0 0 76px;}
-.tour-stage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 240px);background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
+.wrap.tour-page{max-width:1560px;}
+.tour-stage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 216px);background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
 .tour-stage.fullscreen-active{border-radius:0;}
 .tour-transition{position:absolute;inset:0;z-index:150;pointer-events:none;opacity:0;visibility:hidden;}
 .tour-transition.playing,.tour-transition.leaving{opacity:1;visibility:visible;pointer-events:auto;}
@@ -760,7 +761,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 <!-- ============ VIRTUAL TOUR PAGE ============ -->
 <main id="page-tour" class="page">
   <div class="wrap tour-page">
-    <div class="section-head" style="margin:36px auto 24px;">
+    <div class="section-head" style="margin:14px auto 10px;">
       <span class="eyebrow">Look around</span>
       <h2>360° virtual tour</h2>
       <p>Drag to look around, click a glowing hotspot to move to the next location.</p>
@@ -1110,12 +1111,15 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 <!-- ============ SPEAKING MODE PROMPT ============ -->
 <div class="speak-modal hidden" id="speakModeModal">
   <div class="speak-modal-card">
+    <img class="speak-hero speak-hero-batman" src="hero-batman.png" alt="" aria-hidden="true">
+    <img class="speak-hero speak-hero-ww" src="hero-wonderwoman.png" alt="" aria-hidden="true">
     <h3>Enable audio?</h3>
     <div class="speak-modal-divider"></div>
     <div class="speak-modal-actions">
       <button class="speak-yes" id="speakModeYes">YES</button>
       <button class="speak-no" id="speakModeNo">NO</button>
     </div>
+    <img class="speak-hero speak-hero-superman" src="hero-superman.png" alt="" aria-hidden="true">
   </div>
 </div>
 
@@ -3954,7 +3958,7 @@ init();
 }
 .spidey-voice-btn:hover{background:#f0f0f0;transform:scale(1.15);}
 .speak-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:rgba(9,12,16,.55);padding:20px;}
-.speak-modal-card{background:#fff;border-radius:9px;max-width:470px;width:100%;padding:40px 44px 40px;position:relative;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:speakCardIn .28s ease-out;}
+.speak-modal-card{background:#fff;border-radius:9px;max-width:760px;width:100%;padding:40px 230px 124px;position:relative;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:speakCardIn .28s ease-out;}
 @keyframes speakCardIn{from{opacity:0;transform:translateY(14px) scale(.97);}to{opacity:1;transform:none;}}
 .speak-modal-spidey{position:absolute;top:-70px;left:50%;width:138px;height:auto;pointer-events:none;filter:drop-shadow(0 16px 16px rgba(0,0,0,.4));animation:spideyPopOut .75s cubic-bezier(.2,1.5,.4,1) .15s both;}
 @keyframes spideyPopOut{
@@ -3964,10 +3968,16 @@ init();
   90%{transform:translateX(-50%) translateY(-3px) scale(1.02) rotate(1deg);}
   100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1) rotate(0);}
 }
+.speak-hero{position:absolute;bottom:14px;pointer-events:none;filter:drop-shadow(0 16px 18px rgba(0,0,0,.25));animation:heroRise .6s cubic-bezier(.2,.8,.2,1) both;}
+.speak-hero-batman{left:-18px;height:76%;}
+.speak-hero-ww{right:-18px;height:80%;}
+.speak-hero-superman{left:50%;bottom:-44px;width:252px;transform:translateX(-50%);animation-name:heroRiseC;animation-delay:.15s;}
+@keyframes heroRise{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:translateY(0);}}
+@keyframes heroRiseC{from{opacity:0;transform:translateX(-50%) translateY(26px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 .speak-modal-card h3{margin:0 0 24px;font-family:var(--font-display);font-size:27px;font-weight:800;color:#3f3f44;letter-spacing:-.01em;}
 .speak-modal-divider{height:1px;background:#e8e8ea;margin:0 0 28px;}
 .speak-modal-actions{display:flex;gap:18px;justify-content:center;}
-.speak-yes,.speak-no{min-width:150px;padding:16px 0;font-size:16px;font-weight:800;letter-spacing:.1em;color:#fff;border:none;border-radius:5px;cursor:pointer;transition:.15s transform,.15s box-shadow,.15s background;}
+.speak-yes,.speak-no{min-width:138px;padding:16px 0;font-size:16px;font-weight:800;letter-spacing:.1em;color:#fff;border:none;border-radius:5px;cursor:pointer;transition:.15s transform,.15s box-shadow,.15s background;}
 .speak-yes{background:#4a4d52;box-shadow:0 4px 12px rgba(0,0,0,.18);}
 .speak-yes:hover{background:#33363b;transform:translateY(-1px);}
 .speak-no{background:#8b8e93;box-shadow:0 4px 12px rgba(0,0,0,.14);}
@@ -4036,10 +4046,12 @@ body.fs-lock{overflow:hidden;}
   .lp-actions .btn{min-width:130px;}
   .loc-panel-body{padding-bottom:calc(30px + env(safe-area-inset-bottom));}
   .speak-modal{padding:16px 14px;}
+  .speak-modal-card{padding:36px 18px 34px;}
+  .speak-hero{display:none;}
   .admin-login-card{max-width:100%;}
 }
 @media (max-width:760px) and (orientation:portrait){
-  .tour-stage{aspect-ratio:1/1;}
+  .tour-stage{aspect-ratio:4/5;}
 }
 @media (max-width:400px){
   .brand-text strong{font-size:13px;}
