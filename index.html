@@ -1111,6 +1111,7 @@ table.admintable tr:hover td{background:var(--paper-dim);}
 <!-- ============ SPEAKING MODE PROMPT ============ -->
 <div class="speak-modal hidden" id="speakModeModal">
   <div class="speak-modal-card">
+    <img class="speak-modal-spidey" src="spidey-guide.png" alt="" aria-hidden="true">
     <img class="speak-hero speak-hero-batman" src="hero-batman.png" alt="" aria-hidden="true">
     <img class="speak-hero speak-hero-ww" src="hero-wonderwoman.png" alt="" aria-hidden="true">
     <h3>Enable audio?</h3>
@@ -3969,8 +3970,8 @@ init();
   100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1) rotate(0);}
 }
 .speak-hero{position:absolute;bottom:14px;pointer-events:none;filter:drop-shadow(0 16px 18px rgba(0,0,0,.25));animation:heroRise .6s cubic-bezier(.2,.8,.2,1) both;}
-.speak-hero-batman{left:-18px;height:76%;}
-.speak-hero-ww{right:-18px;height:80%;}
+.speak-hero-batman{left:-14px;bottom:-10px;height:78%;}
+.speak-hero-ww{right:-14px;bottom:-10px;height:82%;}
 .speak-hero-superman{left:50%;bottom:-44px;width:252px;transform:translateX(-50%);animation-name:heroRiseC;animation-delay:.15s;}
 @keyframes heroRise{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:translateY(0);}}
 @keyframes heroRiseC{from{opacity:0;transform:translateX(-50%) translateY(26px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
